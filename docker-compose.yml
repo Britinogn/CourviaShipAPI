@@ -1,0 +1,69 @@
+# version: '3.8'
+
+services:
+  # 🧩 MongoDB Database
+  mongo:
+    image: mongo:latest
+    container_name: mongodbnova
+    ports:
+      - "27017:27017"
+    environment:
+      # MONGO_INITDB_DATABASE: nova
+      MONGO_INITDB_ROOT_USERNAME: nova
+      MONGO_INITDB_ROOT_PASSWORD: nova1234
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - nova-network
+
+  # 🧩 NovaSend Server
+  server:
+    build: 
+      context: .
+      dockerfile: dockerfile
+
+    container_name: server
+    ports:
+      - "${PORT}:${PORT}"
+
+   # 👉 LOAD YOUR .env FILE HERE  
+    env_file:
+      - .env
+    
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      PORT: ${PORT}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+
+    depends_on:
+      - mongo
+
+    networks:
+      - nova-network
+    command: node dist/server.js
+
+    develop:
+      watch:
+        # sync TS source files into the container
+        - action: sync
+          path: ./src             # where your .ts files live
+          target: /app/src        # where code is in the container
+          ignore:
+            - node_modules/
+        # when package.json changes, do a full rebuild
+        - action: rebuild
+          path: package.json
+
+
+volumes:
+  mongo_data:
+
+networks:
+  nova-network:
+    driver: bridge
+
+

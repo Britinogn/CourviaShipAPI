@@ -1,0 +1,7 @@
+.env
+node_modules
+dist
+# src/docs
+# src/config/swagger.ts
+.http
+.vscode
