@@ -37,7 +37,7 @@ export interface IUser {
 export interface IPerson extends IAddress{
   name: string;
   email: string;
-  phone: string;
+  phoneNumber: string;
   companyName?: string;          
   alternatePhone?: string;
 }
@@ -65,7 +65,7 @@ export interface IPackage {
 // Shipment interface
 export interface IShipment {
   _id?: string | ObjectId;
-  trackingId: string;
+  trackingId: string ;
   
   sender: IPerson;
   receiver: IPerson;
@@ -87,7 +87,7 @@ export interface IShipment {
 export interface ITrackingShipment {
   trackingId: string;             
   sender: Pick<IPerson, "name" | "city" | "country">; 
-  receiver: Pick<IPerson, "name" | "city" | "phone" | "country">;
+  receiver: Pick<IPerson, "name" | "city" | "phoneNumber" | "country">;
 
   status: ShipmentStatus;      
   destination: IAddress;

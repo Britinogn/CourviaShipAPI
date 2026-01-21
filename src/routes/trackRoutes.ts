@@ -5,4 +5,6 @@ import trackingController from "../controller/trackingController";
 
 
 //public track
-router.get('/', trackingController.trackShipment)
+router.get('"/:id"', trackingController.trackShipment)
+
+export default router;

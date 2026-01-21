@@ -15,7 +15,7 @@ export interface IShipmentDocument extends Omit<IShipment, '_id'>, Document {}
 const PersonSchema = new Schema<IPerson>({
   name:           { type: String, required: true },
   email:          { type: String, required: true, lowercase: true, trim: true },
-  phone:          { type: String, required: true, trim: true },
+  phoneNumber:          { type: String, required: true, trim: true },
   address:        { type: String, required: true },  // or rename → addressLine1
   city:           { type: String, required: true },
   country:        { type: String, enum: countries, required: true},

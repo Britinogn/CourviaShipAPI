@@ -12,7 +12,7 @@ const SenderPersonSchema = new Schema({
 
 const ReceiverMinimalSchema = new Schema({
     name:   { type: String, required: true, trim: true },
-    phone:  { type: String, required: true, trim: true },
+    phoneNumber:  { type: String, required: true, trim: true },
     city:   { type: String, required: true },
     country: { type: String, enum: countries, required: true },
 }, { _id: false });
@@ -27,10 +27,20 @@ const DestinationSchema = new Schema({
 const TrackingSchema = new Schema<ITrackingDocument>({
     trackingId: {
         type: String,
+        //type: Schema.Types.ObjectId, 
+        ref: 'Shipment',
         required: true,
         unique: true,
         index: true,
     },
+
+    // NEW: Reference to the main Shipment document
+    // shipment: {
+    //     type: Schema.Types.ObjectId,
+    //     ref: 'Shipment',           // ← must match the model name you used in mongoose.model('Shipment', ...)
+    //     required: true,
+    //     index: true,
+    // },
 
     sender: {
         type: SenderPersonSchema,
@@ -88,7 +98,7 @@ const TrackingSchema = new Schema<ITrackingDocument>({
 TrackingSchema.index({ trackingId: 1 });
 TrackingSchema.index({ status: 1 });
 
-export const PublicTracking: Model<ITrackingDocument> = mongoose.model<ITrackingDocument>(
+export const Tracking: Model<ITrackingDocument> = mongoose.model<ITrackingDocument>(
     'Tracking', 
     TrackingSchema
 );

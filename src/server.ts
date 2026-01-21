@@ -14,10 +14,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 import authRoutes from './routes/authRoutes';
+import shipmentRoutes from './routes/shipmentRoutes'
+import trackRoutes from './routes/trackRoutes'
 
 
 //use routes
 app.use('/api/auth', authRoutes);
+app.use('/shipments', shipmentRoutes)
+app.use('/tracking', trackRoutes)
+
 
 app.get('/health', (req: Request, res: Response) => {
     res.json({ 

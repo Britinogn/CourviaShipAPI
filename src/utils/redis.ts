@@ -1,13 +1,12 @@
-import Redis from "ioredis";
+// src/lib/redis.ts
+import { Redis } from "@upstash/redis";
 
 const redis = new Redis({
-    host: process.env.REDIS_HOST || "127.0.0.1",
-    port: Number(process.env.REDIS_PORT) || 6379,
-    //password: process.env.REDIS_PASSWORD || undefined,
-    db: 0,
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-redis.on("connect", () => console.log("Redis connected"));
-redis.on("error", (err) => console.error("Redis error:", err));
+export default redis
 
-export default redis;
+// await redis.set("foo", "bar");
+// await redis.get("foo");
