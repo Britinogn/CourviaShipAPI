@@ -38,8 +38,6 @@ export const registerUser = async (
         username,
         email,
         password: hashedPassword,
-        createdAt: new Date(),
-        updatedAt: new Date()
     }
 
     const user = await User.create(newUser)

@@ -27,3 +27,28 @@ EXPOSE $PORT
 
 # Run the application
 CMD ["node", "dist/server.ts"]
+
+
+# docker starter 
+# docker compose --build -b 
+# docker compose up --build -d
+
+# Start Docker Desktop (if installed)
+# On Mac/Linux:
+# open -a Docker
+
+# Or just start Docker service:
+# sudo systemctl start docker
+
+# Check if Docker is running:
+# docker --version
+# docker ps
+
+# If you have a docker-compose file:
+# docker-compose up
+
+# Or to run in background:
+# docker-compose up -d
+
+# To build and start:
+# docker-compose up --build

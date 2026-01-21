@@ -7,7 +7,7 @@ interface AuthRequest extends Request {
     user?: IUser;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
 export const authMiddleware = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {

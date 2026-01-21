@@ -1,4 +1,4 @@
-# CourviaShip Server (NovaSend API)
+# CourviaShip Server (CourviaShip  API)
 
 Backend API service for the CourviaShip / NovaSend platform, built with Node.js, Express, and TypeScript. This service handles user authentication, shipment management, and courier tracking.
 
@@ -32,14 +32,6 @@ Backend API service for the CourviaShip / NovaSend platform, built with Node.js,
 
     ```bash
     npm install
-    ```
-
-4.  **Environment Configuration**:
-    Create a `.env` file in the root directory (based on `.env.example` if available) and configure your variables:
-    ```env
-    PORT=3000
-    MONGO_URI=your_mongodb_connection_string
-    # Add other required variables (REDIS_URL, CLOUDINARY_*, JWT_SECRET, etc.)
     ```
 
 ## Running the Application

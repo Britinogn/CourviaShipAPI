@@ -1,46 +1,52 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import { 
   IShipment, 
-  IPersonInfo, 
-  IHubAddress, 
+  IPerson, 
+  IAddress, 
   IPackage,
   ShipmentStatus, 
 } from '../types';
-import {Country}  from "../utils/countries";
+import {countries}  from "../utils/countries";
 
 // Mongoose document type
 export interface IShipmentDocument extends Omit<IShipment, '_id'>, Document {}
 
 // Schema definitions
-const PersonInfoSchema = new Schema<IPersonInfo>({
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: { type: String, required: true },
-  address: { type: String, required: true },
-  city: { type: String, required: true },
-  country: { type: String, required: true },
-  zipCode: { type: String, required: true }
+const PersonSchema = new Schema<IPerson>({
+  name:           { type: String, required: true },
+  email:          { type: String, required: true, lowercase: true, trim: true },
+  phone:          { type: String, required: true, trim: true },
+  address:        { type: String, required: true },  // or rename → addressLine1
+  city:           { type: String, required: true },
+  country:        { type: String, enum: countries, required: true},
+  zipCode:        { type: String },
+  companyName:    { type: String },
+  alternatePhone: { type: String, trim: true },
 }, { _id: false });
 
-const HubAddressSchema = new Schema<IHubAddress>({
-  address: { type: String, required: true },
-  city: { type: String, required: true },
-  country: { type: String, required: true },
-  zipCode: { type: String, required: true }
+
+const AddressSchema = new Schema<IAddress>({
+  address:   { type: String, required: true },
+  city:      { type: String, required: true },
+  country:   { type: String, enum: countries, required: true},
+  zipCode:   { type: String },
 }, { _id: false });
 
 //enum: Object.values(Country), 
 
 const PackageSchema = new Schema<IPackage>({
-  weight: { type: Number, required: true, min: 0 },
-  dimensions: { type: String, required: true },
-  description: { type: String, required: true },
-  declaredValue: { type: Number, min: 0 }
+  weightKg:          { type: Number, required: true, min: 0 },
+  dimensions:        { type: String, required: true, trim: true },
+  description:       { type: String, required: true, trim: true },
+  declaredValue:     { type: Number, min: 0 },
+  quantity:          { type: Number, min: 1, default: 1 },
+  isFragile:         { type: Boolean, default: false },
+  requiresSignature: { type: Boolean, default: false },
 }, { _id: false });
 
 // Main Shipment Schema
 const ShipmentSchema = new Schema<IShipmentDocument>({
-  trackingCode: { 
+  trackingId: { 
     type: String, 
     required: true, 
     unique: true,
@@ -48,12 +54,12 @@ const ShipmentSchema = new Schema<IShipmentDocument>({
   },
   
   sender: { 
-    type: PersonInfoSchema, 
+    type: PersonSchema, 
     required: true 
   },
   
   receiver: { 
-    type: PersonInfoSchema, 
+    type: PersonSchema, 
     required: true 
   },
 
@@ -63,12 +69,12 @@ const ShipmentSchema = new Schema<IShipmentDocument>({
   },
 
   origin: { 
-    type: HubAddressSchema, 
+    type: AddressSchema, 
     required: true 
   },
   
   destination: { 
-    type: HubAddressSchema, 
+    type: AddressSchema, 
     required: true 
   },
 
@@ -76,7 +82,29 @@ const ShipmentSchema = new Schema<IShipmentDocument>({
     type: String,
     enum: Object.values(ShipmentStatus),
     required: true,
-    default: ShipmentStatus.PickedUp
+    default: ShipmentStatus.InTransit
+  },
+
+  currentLocation: {
+  type: {
+    name:         { type: String, trim: true },
+    address:      { type: String, trim: true },
+    city:         { type: String, trim: true },
+    country:      { type: String, enum: countries },
+    zipCode:      { type: String },
+    contactName:  { type: String, trim: true },
+    contactPhone: { type: String, trim: true },
+    arrivedAt:    Date,
+    departedAt:   Date,
+  },
+  required: false,
+  _id: false,
+}, 
+
+  registeredAt: {
+    type: Date,
+    default: Date.now,
+    required: true
   },
 
   estimatedDelivery: { 
@@ -88,7 +116,7 @@ const ShipmentSchema = new Schema<IShipmentDocument>({
 });
 
 // Indexes for better query performance
-ShipmentSchema.index({ trackingCode: 1 });
+ShipmentSchema.index({ trackingId: 1 });
 ShipmentSchema.index({ status: 1 });
 ShipmentSchema.index({ 'sender.email': 1 });
 ShipmentSchema.index({ 'receiver.email': 1 });

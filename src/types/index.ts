@@ -3,6 +3,7 @@ import {Country}  from "../utils/countries";
 
 // Enums for better type safety
 export enum ShipmentStatus {
+  Registered = "Registered",
   PickedUp = "PickedUp",
   InTransit = "InTransit",
   EnRoute = "EnRoute",
@@ -11,11 +12,13 @@ export enum ShipmentStatus {
   OutForDelivery = "OutForDelivery",
   Delivered = "Delivered",
   Delayed = "Delayed",
-  Cancelled = "Cancelled"
+  Cancelled = "Cancelled",
+  Exception = "Exception"
 }
 
 export enum NotificationType {
-  Email = "email"
+  Email = "email",
+  Sms = "sms"
 }
 
 export enum NotificationStatus {
@@ -24,15 +27,6 @@ export enum NotificationStatus {
   Failed = "failed"
 }
 
-// Country enum - adjust based on your actual countries
-// export enum Country {
-//   US = "United States",
-//   UK = "United Kingdom",
-//   CA = "Canada",
-//   NG = "Nigeria",
-//   // Add more countries as needed
-// }
-
 export interface IUser {
   _id: string | ObjectId;
   username: string;
@@ -40,80 +34,90 @@ export interface IUser {
   password: string;
 }
 
-// Address for hubs (origin/destination)
-export interface IHubAddress {
-  address: string;
-  city: string;
-  country: Country;
-  zipCode: string;
-}
-
-// Personal sender/receiver information
-export interface IPersonInfo {
+export interface IPerson extends IAddress{
   name: string;
   email: string;
   phone: string;
+  companyName?: string;          
+  alternatePhone?: string;
+}
+
+// Address for person (origin/destination)
+export interface IAddress {
   address: string;
   city: string;
   country: Country;
-  zipCode: string;
+  zipCode?: string;
 }
 
-// Package information
 
+// Package information
 export interface IPackage {
-  weight: number;          // in kg
+  weightKg: number;          // in kg
   dimensions: string;      // e.g., "30x20x15 cm"
   description: string;
-  declaredValue?: number;
+  declaredValue?: number;       // in sender's currency
+  quantity?: number;               // ← added: useful for multiple identical items
+  isFragile?: boolean;
+  requiresSignature?: boolean;
 }
 
 // Shipment interface
 export interface IShipment {
   _id?: string | ObjectId;
-  trackingCode: string;
+  trackingId: string;
   
-  sender: IPersonInfo;
-  receiver: IPersonInfo;
+  sender: IPerson;
+  receiver: IPerson;
 
   package: IPackage;
 
-  origin: IHubAddress;         // warehouse/hub
-  destination: IHubAddress;    // warehouse/hub
+  origin: IAddress;         // pickup location
+  destination: IAddress;    // delivery location    
 
-  status: ShipmentStatus;      // current status (Registered, InTransit, etc.)
+  status: ShipmentStatus;      
 
-  sentAt?: Date; 
+  registeredAt: Date; 
   estimatedDelivery: Date;
+
+  currentLocation?: ITrackingLocation;
 }
 
-// Tracking event interface
-export interface ITrackingEvent {
-  _id?: string | ObjectId;
-  shipmentId: string;
-  status: ShipmentStatus;
-  city: string;
+// Tracking shipment interface
+export interface ITrackingShipment {
+  trackingId: string;             
+  sender: Pick<IPerson, "name" | "city" | "country">; 
+  receiver: Pick<IPerson, "name" | "city" | "phone" | "country">;
+
+  status: ShipmentStatus;      
+  destination: IAddress;
   country: Country;
+  currentLocation?: ITrackingLocation;
   note?: string;
-  timestamp: Date;
+
+  registeredAt: Date;
+  estimatedDelivery: Date; 
 }
+
 
 export interface INotification {
   _id?: string | ObjectId;
-  shipmentId: string;
+  trackingId: string;
   type: NotificationType;
   recipient: string;       // email or phone
   message: string;
-  sentAt?: Date;
+  sentAt: Date;
   status: NotificationStatus;
 }
 
 export interface ITrackingLocation {
-  hubName?: string;
+  name?: string;                  
   address?: string;
   city: string;
   country: Country;
   zipCode?: string;
   contactName?: string;
   contactPhone?: string;
+  arrivedAt?: Date;
+  departedAt?: Date;
 }
