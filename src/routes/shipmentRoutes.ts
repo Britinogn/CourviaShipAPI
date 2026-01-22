@@ -6,7 +6,7 @@ import { authMiddleware } from "../middleware/authMiddleware";
 
 //admin only
 router.post('/', shipmentController.createShipment)
-router.put('/:id',authMiddleware, shipmentController.updateShipment)
+router.patch('/:trackingId', shipmentController.updateShipment)
 router.delete('/:id', authMiddleware, shipmentController.deleteShipment)
 
 
