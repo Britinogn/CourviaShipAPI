@@ -1,14 +1,19 @@
 import PDFDocument from 'pdfkit';
-import fs from 'fs';
-import path from 'path';
-import { IShipment } from '../types'; // your Shipment type
+import { HydratedDocument } from 'mongoose';
+// import fs from 'fs';
+// import path from 'path';
+import { IShipment } from '../types'; 
+import {IShipmentDocument} from '../models/Shipment'
 
 /**
  * Generates a PDF receipt buffer for a shipment
  * @param shipment - The saved Shipment document
  * @returns Promise<Buffer> - PDF file as buffer (can be sent via email or download)
  */
-export const generateReceiptPDF = async (shipment: IShipment): Promise<Buffer> => {
+export const generateReceiptPDF = async (
+    // shipment: IShipment
+    shipment: IShipment | HydratedDocument<IShipmentDocument>
+): Promise<Buffer> => {
     return new Promise((resolve, reject) => {
         const doc = new PDFDocument({ margin: 50, size: 'A4' });
         const buffers: Buffer[] = [];
@@ -53,21 +58,21 @@ export const generateReceiptPDF = async (shipment: IShipment): Promise<Buffer> =
         .text(`Signature Required: ${shipment.package.requiresSignature ? 'Yes' : 'No'}`)
         .moveDown(1);
 
-        // ─── Origin / Destination ──────────────────────────────────
+        // ─── Origin / Destination 
         doc.fontSize(14).text('Route:');
         doc.fontSize(12)
         .text(`From: ${shipment.origin.address}, ${shipment.origin.city}, ${shipment.origin.country}`)
         .text(`To: ${shipment.destination.address}, ${shipment.destination.city}, ${shipment.destination.country}`)
         .moveDown(1);
 
-        // ─── Status & Estimated Delivery ───────────────────────────
+        // ─── Status & Estimated Delivery
         doc.fontSize(14).text('Status & Delivery:');
         doc.fontSize(12)
         .text(`Current Status: ${shipment.status}`)
         .text(`Estimated Delivery: ${shipment.estimatedDelivery.toLocaleDateString()}`)
         .moveDown(2);
 
-        // ─── Footer ────────────────────────────────────────────────
+        // ─── Footer 
         doc.fontSize(10).text('Thank you for choosing CourviaShip!', 50, doc.y, { align: 'center' });
         doc.text('Contact support: support@courviaship.com | +1-XXX-XXX-XXXX', { align: 'center' });
 
@@ -75,5 +80,5 @@ export const generateReceiptPDF = async (shipment: IShipment): Promise<Buffer> =
     });
 
     // const receiptPath = path.join(__dirname, `../../receipts/receipt-${trackingId}.pdf`);
-    // fs.writeFileSync(receiptPath, receiptBuffer);
+    // fs.writeFileSync(receiptPath, Buffer.from(receiptPdf.data));
 };

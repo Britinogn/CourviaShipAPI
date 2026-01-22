@@ -2,7 +2,7 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 import { ITrackingShipment, ShipmentStatus } from '../types';
 import { countries } from '../utils/countries';
 
-export interface ITrackingDocument extends Omit<ITrackingShipment, '_id'>, Document {shipment: mongoose.Types.ObjectId;}
+export interface ITrackingDocument extends Omit<ITrackingShipment, '_id'>, Document {}
 
 const SenderPersonSchema = new Schema({
     name:   { type: String, required: true, trim: true },
@@ -29,14 +29,6 @@ const TrackingSchema = new Schema<ITrackingDocument>({
         type: String,
         required: true,
         unique: true,
-        index: true,
-    },
-
-    // NEW: Reference to the main Shipment document
-    shipment: {
-        type: Schema.Types.ObjectId,
-        ref: 'Shipment',           // ← must match the model name you used in mongoose.model('Shipment', ...)
-        required: true,
         index: true,
     },
 

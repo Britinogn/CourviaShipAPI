@@ -20,8 +20,8 @@ import trackRoutes from './routes/trackRoutes'
 
 //use routes
 app.use('/api/auth', authRoutes);
-app.use('/shipments', shipmentRoutes)
-app.use('/tracking', trackRoutes)
+app.use('/api/shipments', shipmentRoutes)
+app.use('/api/tracking', trackRoutes)
 
 
 app.get('/health', (req: Request, res: Response) => {
@@ -38,11 +38,11 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'NovaSend API is running!' })
+    res.json({ status: 'NovaSend API is running!' })
 })
 
 app.get('/ping', (req, res) => {
-  res.status(200).send('NovaSend API is running!');
+    res.status(200).send('NovaSend API is running!');
 });
 // Create HTTP server
 const server = http.createServer(app);

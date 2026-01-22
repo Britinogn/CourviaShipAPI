@@ -30,6 +30,14 @@ export const getShipment = async (req: Request, res: Response) => {
 export const createShipment = async (req: Request, res: Response) => {
   try {
     const result = await registerShipmentServices(req.body);
+
+    // res.set({
+    //   'Content-Type': 'application/pdf',
+    //   'Content-Disposition': `attachment; filename="receipt-${result.trackingId}.pdf"`,
+    //   'Content-Length': result.receiptPdf.data.length,
+    // });
+
+    // res.send(Buffer.from(result.receiptPdf.data));
     res.status(201).json(result);
   } catch (err: any) {
     res.status(400).json({ error: err.message });

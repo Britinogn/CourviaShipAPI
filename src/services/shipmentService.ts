@@ -1,8 +1,8 @@
 import { Shipment } from "../models/Shipment";
-import { Tracking } from "../models/TrackingShipment"; // your public tracking model
-import { IShipment, IPerson, IPackage, IAddress, ShipmentStatus } from "../types";
+import { Tracking } from "../models/TrackingShipment"; 
+import { IPerson, IPackage, IAddress, ShipmentStatus } from "../types";
 import { Country } from "../utils/countries";
-import { generateTrackingCode } from "../utils/trackingId"; // ← create this helper
+import { generateTrackingCode } from "../utils/trackingId"; 
 import { generateReceiptPDF } from "../utils/generateReceipt";
 
 
@@ -57,23 +57,22 @@ export const registerShipmentServices = async (data: {
     // Optional
     estimatedDelivery: Date;
 }) => {
-  const {
-    senderName, senderEmail, senderPhone, senderAddress, senderCity, senderCountry,
-    senderZipCode,
+    const {
+        senderName, senderEmail, senderPhone, senderAddress, senderCity, senderCountry,
+        senderZipCode,
 
-    receiverName, receiverEmail, receiverPhone, receiverAddress, receiverCity, receiverCountry,
-    receiverZipCode,
+        receiverName, receiverEmail, receiverPhone, receiverAddress, receiverCity, receiverCountry,
 
-    packageWeightKg, packageDimensions, packageDescription, packageDeclaredValue,
-    packageQuantity = 1, packageIsFragile = false, packageRequiresSignature = false,
+        packageWeightKg, packageDimensions, packageDescription, packageDeclaredValue,
+        packageQuantity = 1, packageIsFragile = false, packageRequiresSignature = false,
 
-    originAddress, originCity, originCountry, originZipCode,
-    destinationAddress, destinationCity, destinationCountry, destinationZipCode,
+        originAddress, originCity, originCountry, originZipCode,
+        destinationAddress, destinationCity, destinationCountry, destinationZipCode,
 
-    estimatedDelivery,
-  } = data;
+        estimatedDelivery,
+    } = data;
 
-  // ─── Validation ────────────────────────────────────────
+  // ─── Validation ────
     if (!senderName || !senderEmail || !senderPhone || !senderAddress || !senderCity || !senderCountry) {
         throw new Error("All sender fields are required");
     }
@@ -93,11 +92,11 @@ export const registerShipmentServices = async (data: {
         throw new Error("Valid future estimated delivery date is required");
     }
 
-  // ─── Generate unique tracking ID ───────────────────────
+  //  Generate unique tracking ID 
     const trackingId = await generateTrackingCode();
     
 
-  // ─── Build sender & receiver objects ───────────────────
+  // Build sender & receiver objects 
     const sender: IPerson = {
         name: senderName,
         email: senderEmail,
@@ -106,7 +105,6 @@ export const registerShipmentServices = async (data: {
         city: senderCity,
         country: senderCountry,
         zipCode: senderZipCode,
-        //...(senderZipCode !== undefined && { zipCode: senderZipCode }),
     };
 
     const receiver: IPerson = {
@@ -117,28 +115,25 @@ export const registerShipmentServices = async (data: {
         city: receiverCity,
         country: receiverCountry,
         zipCode: senderZipCode,
-        //...(senderZipCode !== undefined && { zipCode: senderZipCode }),
     };
 
-    // ─── Package object ────────────────────────────────────
+    // ─── Package object ───────
     const packageInfo: IPackage = {
         weightKg: packageWeightKg,
         dimensions: packageDimensions,
         description: packageDescription,
         declaredValue: packageDeclaredValue,
-        //...(packageDeclaredValue !== undefined && { declaredValue: packageDeclaredValue }),
         quantity: packageQuantity,
         isFragile: packageIsFragile,
         requiresSignature: packageRequiresSignature,
     };
 
-    // ─── Origin & Destination ──────────────────────────────
+    // Origin & Destination 
     const origin: IAddress = {
         address: originAddress,
         city: originCity,
         country: originCountry,
-        zipCode: senderZipCode
-        //...(originZipCode !== undefined && { zipCode: originZipCode }),
+        zipCode: senderZipCode,
     };
 
     const destination: IAddress = {
@@ -149,7 +144,7 @@ export const registerShipmentServices = async (data: {
         //...(destinationZipCode !== undefined && { zipCode: destinationZipCode }),
     };
 
-    // ─── Create full shipment ──────────────────────────────
+    // Create full shipment 
     const shipment = new Shipment({
         trackingId,
         sender,
@@ -165,19 +160,19 @@ export const registerShipmentServices = async (data: {
 
     await shipment.save();
 
-    // ─── Create public tracking record ─────────────────────
+    // Create public tracking record 
     await Tracking.create({
         trackingId,
         sender: {
-        name: sender.name,
-        city: sender.city,
-        country: sender.country,
+            name: sender.name,
+            city: sender.city,
+            country: sender.country,
         },
         receiver: {
-        name: receiver.name,
-        phoneNumber: receiver.phoneNumber,
-        city: receiver.city,
-        country: receiver.country,
+            name: receiver.name,
+            phoneNumber: receiver.phoneNumber,
+            city: receiver.city,
+            country: receiver.country,
         },
         status: shipment.status,
         destination,
@@ -185,14 +180,12 @@ export const registerShipmentServices = async (data: {
         estimatedDelivery: shipment.estimatedDelivery,
     });
 
-    //const receiptBuffer = await generateReceiptPDF(shipment);
-
+    const receiptBuffer = await generateReceiptPDF(shipment); 
+    
     return {
         trackingId,
         message: "Shipment registered successfully",
         shipmentId: shipment._id,
-        //receiptPdf: receiptBuffer,
+        receiptPdf: receiptBuffer,
     };
-
-    
 };
