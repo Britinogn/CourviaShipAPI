@@ -15,7 +15,7 @@ router.get('/', authMiddleware, shipmentController.getAllShipmentsController);
 router.patch('/:trackingId', authMiddleware, shipmentController.updateShipment)
 
 // Delete
-router.delete('/bulk', authMiddleware, shipmentController.deleteMultipleShipmentsController);
-router.delete('/:trackingId', authMiddleware, shipmentController.deleteShipment);
+//router.delete('/bulk', authMiddleware, shipmentController.deleteMultipleShipmentsController);
+router.delete('/:trackingId',  shipmentController.deleteShipment);
 
 export default router;
