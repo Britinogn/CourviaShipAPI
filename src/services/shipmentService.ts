@@ -253,6 +253,11 @@ export const registerShipmentServices = async (data: {
         estimatedDelivery: shipment.estimatedDelivery,
     });
 
+    const websiteUrl = process.env.WEBSITE_URL as string;
+
+    const trackingUrl = `${websiteUrl}/track?code=${trackingId}`;
+
+
     // ✅ SEND REGISTRATION EMAIL
     try {
         await sendRegistrationEmail({
@@ -270,6 +275,7 @@ export const registerShipmentServices = async (data: {
             packageDescription: packageInfo.description,
             packageWeight: packageInfo.weightKg.toString(),
             packageQuantity: packageInfo.quantity || 1,
+            trackingUrl:trackingUrl
         });
         console.log('✅ Registration email sent successfully');
     } catch (emailError: any) {
@@ -495,6 +501,9 @@ export const updateShipmentServices = async(
         }
     }
 
+    const websiteUrl = process.env.WEBSITE_URL as string;
+
+    const trackingUrl = `${websiteUrl}/track?code=${trackingId}`;
     // ✅ SEND UPDATE EMAIL (only if status or delivery date changed)
     if (status !== undefined || estimatedDelivery !== undefined) {
         try {
@@ -506,13 +515,17 @@ export const updateShipmentServices = async(
                 receiverCountry: updatedShipment.receiver.country,
                 oldStatus: shipment.status, // Old status before update
                 newStatus: status || updatedShipment.status,
-                estimatedDelivery: estimatedDelivery 
-                    ? estimatedDelivery.toISOString().split('T')[0] 
-                    : updatedShipment.estimatedDelivery.toISOString().split('T')[0],
+                estimatedDelivery: new Date(
+                    estimatedDelivery ?? updatedShipment.estimatedDelivery
+                ).toISOString().split('T')[0],
                 updateMessage: status 
                     ? `Your package status has been updated to ${status}.`
                     : 'Your package delivery information has been updated.',
+                trackingUrl:trackingUrl
             });
+
+             //estimatedDelivery: new Date(estimatedDelivery).toISOString().split('T')[0],
+
             console.log('✅ Update email sent successfully');
         } catch (emailError: any) {
             console.error('⚠️ Failed to send update email:', emailError.message);

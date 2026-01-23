@@ -2,6 +2,7 @@ import { transporter, defaultEmailOptions } from './emailConfig';
 import fs from 'fs/promises';
 import path from 'path';
 
+
 // Interfaces
 export interface RegistrationEmailData {
     to: string;
@@ -17,7 +18,9 @@ export interface RegistrationEmailData {
     packageDescription: string;
     packageWeight: string;
     packageQuantity: number;
+    trackingUrl: string;
 }
+
 
 export interface UpdateEmailData {
     to: string;
@@ -27,9 +30,11 @@ export interface UpdateEmailData {
     receiverCountry: string;
     oldStatus?: string;
     newStatus: string;
-    estimatedDelivery?: string;
+    estimatedDelivery?: string | undefined;
     updateMessage?: string;
+    trackingUrl: string | any;
 }
+
 
 // Helper: Load HTML template
 const loadTemplate = async (templateName: string): Promise<string> => {

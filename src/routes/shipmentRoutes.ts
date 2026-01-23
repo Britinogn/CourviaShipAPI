@@ -12,7 +12,7 @@ router.get('/:trackingId', authMiddleware, shipmentController.getShipment);
 router.get('/', authMiddleware, shipmentController.getAllShipmentsController);
 
 // Update
-router.patch('/:trackingId', authMiddleware, shipmentController.updateShipment)
+router.patch('/:trackingId', shipmentController.updateShipment)
 
 // Delete
 //router.delete('/bulk', authMiddleware, shipmentController.deleteMultipleShipmentsController);
