@@ -4,10 +4,18 @@ const router = express.Router()
 import shipmentController from  "../controller/shipmentController";
 import { authMiddleware } from "../middleware/authMiddleware";
 
-//admin only
+// Create
 router.post('/', shipmentController.createShipment)
-router.patch('/:trackingId', shipmentController.updateShipment)
-router.delete('/:id', authMiddleware, shipmentController.deleteShipment)
 
+// Read
+router.get('/:trackingId', authMiddleware, shipmentController.getShipment);
+router.get('/', authMiddleware, shipmentController.getAllShipmentsController);
+
+// Update
+router.patch('/:trackingId', authMiddleware, shipmentController.updateShipment)
+
+// Delete
+router.delete('/bulk', authMiddleware, shipmentController.deleteMultipleShipmentsController);
+router.delete('/:trackingId', authMiddleware, shipmentController.deleteShipment);
 
 export default router;

@@ -4,7 +4,7 @@ import { IPerson, IPackage, IAddress, ShipmentStatus } from "../types";
 import { Country } from "../utils/countries";
 import { generateTrackingCode } from "../utils/trackingId"; 
 import { generateReceiptPDF } from "../utils/generateReceipt";
-
+import { sendRegistrationEmail, sendUpdateEmail } from '../utils/emailService';
 
 /**
  * Registers a new shipment (admin action).
@@ -12,6 +12,78 @@ import { generateReceiptPDF } from "../utils/generateReceipt";
  * @param trackingId - The tracking ID of the shipment to update
  * @returns The created shipment document
  */
+
+
+// ─── GET ALL SHIPMENTS (with optional filters) ───
+export const getAllShipments = async (filters?: {
+    status?: string;
+    senderName?: string;
+    receiverName?: string;
+    senderEmail?: string;
+    receiverEmail?: string;
+    limit?: number;
+    skip?: number;
+}) => {
+    const query: any = {};
+
+    // Build query from filters
+    if (filters?.status) query.status = filters.status;
+    if (filters?.senderName) query["sender.name"] = filters.senderName;
+    if (filters?.receiverName) query["receiver.name"] = filters.receiverName;
+    if (filters?.senderEmail) query["sender.email"] = filters.senderEmail;
+    if (filters?.receiverEmail) query["receiver.email"] = filters.receiverEmail;
+
+    const limit = filters?.limit || 50; // Default 50 results
+    const skip = filters?.skip || 0;
+
+    // Get shipments
+    const shipments = await Shipment.find(query)
+        .select("-__v")
+        .limit(limit)
+        .skip(skip)
+        .sort({ createdAt: -1 })
+        .lean();
+
+    // Get total count
+    const total = await Shipment.countDocuments(query);
+
+    return {
+        success: true,
+        data: shipments,
+        pagination: {
+            total,
+            limit,
+            skip,
+            hasMore: skip + shipments.length < total,
+        },
+    };
+};
+
+// ─── GET SHIPMENT BY TRACKING ID ───
+export const getShipmentByTrackingId = async (trackingId: string) => {
+    // Validation
+    if (!trackingId?.trim()) {
+        throw new Error("Tracking ID is required");
+    }
+
+    // Find shipment
+    const shipment = await Shipment.findOne({ trackingId })
+        .select("-__v") // Remove version key
+        .lean(); // Return plain JS object (faster)
+
+    if (!shipment) {
+        throw new Error("Shipment not found");
+    }
+
+    // Format response
+    return {
+        success: true,
+        message: "Shipment ID fetched successfully",
+        trackingId,
+    };
+};
+
+
 export const registerShipmentServices = async (data: {
     // Sender
     senderName: string;
@@ -181,6 +253,30 @@ export const registerShipmentServices = async (data: {
         estimatedDelivery: shipment.estimatedDelivery,
     });
 
+    // ✅ SEND REGISTRATION EMAIL
+    try {
+        await sendRegistrationEmail({
+            to: receiverEmail,
+            trackingCode: trackingId,
+            senderName: sender.name,
+            receiverName: receiver.name,
+            receiverEmail: receiver.email,
+            receiverPhone: receiver.phoneNumber,
+            receiverAddress: receiver.address,
+            receiverCity: receiver.city,
+            receiverCountry: receiver.country,
+            estimatedDelivery: new Date(estimatedDelivery).toISOString().split('T')[0], // ✅ Fixed
+            //estimatedDelivery: estimatedDelivery?.toISOString().split('T')[0] || 'N/A',
+            packageDescription: packageInfo.description,
+            packageWeight: packageInfo.weightKg.toString(),
+            packageQuantity: packageInfo.quantity || 1,
+        });
+        console.log('✅ Registration email sent successfully');
+    } catch (emailError: any) {
+        console.error('⚠️ Failed to send registration email:', emailError.message);
+        // Don't throw - shipment is already created
+    }
+
     const receiptBuffer = await generateReceiptPDF(shipment); 
     
     return {
@@ -189,6 +285,7 @@ export const registerShipmentServices = async (data: {
         shipmentId: shipment._id,
         receiptPdf: receiptBuffer,
     };
+    
 };
 
 export const updateShipmentServices = async(
@@ -238,7 +335,7 @@ export const updateShipmentServices = async(
 
         // Optional
         estimatedDelivery?: Date;
-        status?: ShipmentStatus;           // ← correct name (no "package" prefix)
+        status?: ShipmentStatus;
     }
 ) => {
     const {
@@ -255,12 +352,10 @@ export const updateShipmentServices = async(
         destinationAddress, destinationCity, destinationCountry, destinationZipCode,
 
         estimatedDelivery,
-        status, 
-        
-        // ← correct field name
+        status,
     } = data;
 
-    // ─── Validation 
+    // ─── Validation ───
     if (!trackingId?.trim()) {
         throw new Error("Tracking ID is required to update shipment");
     }
@@ -273,20 +368,20 @@ export const updateShipmentServices = async(
         throw new Error(`Invalid status. Must be one of: ${Object.values(ShipmentStatus).join(', ')}`);
     }
 
-    // ─── Find the shipment 
+    // ─── Find the shipment ───
     const shipment = await Shipment.findOne({ trackingId });
 
     if (!shipment) {
         throw new Error("Shipment not found");
     }
 
-    // ─── Prepare update object (dot notation for nested fields) ──
+    // ─── Prepare update object (dot notation for nested fields) ───
     const updateOps: Record<string, any> = {};
 
-    // Sender updates
+    // Sender updates - FIXED: phoneNumber not phone
     if (senderName !== undefined) updateOps["sender.name"] = senderName;
     if (senderEmail !== undefined) updateOps["sender.email"] = senderEmail;
-    if (senderPhone !== undefined) updateOps["sender.phoneNumber"] = senderPhone;
+    if (senderPhone !== undefined) updateOps["sender.phoneNumber"] = senderPhone; // ✅ phoneNumber
     if (senderAddress !== undefined) updateOps["sender.address"] = senderAddress;
     if (senderCity !== undefined) updateOps["sender.city"] = senderCity;
     if (senderCountry !== undefined) updateOps["sender.country"] = senderCountry;
@@ -294,10 +389,10 @@ export const updateShipmentServices = async(
     if (senderCompanyName !== undefined) updateOps["sender.companyName"] = senderCompanyName;
     if (senderAlternatePhone !== undefined) updateOps["sender.alternatePhone"] = senderAlternatePhone;
 
-    // Receiver updates
+    // Receiver updates - FIXED: phoneNumber not phone
     if (receiverName !== undefined) updateOps["receiver.name"] = receiverName;
     if (receiverEmail !== undefined) updateOps["receiver.email"] = receiverEmail;
-    if (receiverPhone !== undefined) updateOps["receiver.phoneNumber"] = receiverPhone;
+    if (receiverPhone !== undefined) updateOps["receiver.phoneNumber"] = receiverPhone; // ✅ phoneNumber
     if (receiverAddress !== undefined) updateOps["receiver.address"] = receiverAddress;
     if (receiverCity !== undefined) updateOps["receiver.city"] = receiverCity;
     if (receiverCountry !== undefined) updateOps["receiver.country"] = receiverCountry;
@@ -328,42 +423,181 @@ export const updateShipmentServices = async(
 
     // Other fields
     if (estimatedDelivery !== undefined) updateOps.estimatedDelivery = estimatedDelivery;
-    if (status !== undefined) updateOps.status = status;  // ← correct key (no "package" prefix)
+    if (status !== undefined) updateOps.status = status;
 
-    //  Apply update to Shipment 
-    const updatedShipment = await Shipment.findOneAndUpdate(
-        { trackingId },
-        { $set: updateOps },
-        { new: true, runValidators: true }
-    );
+    // Debug: Log what we're trying to update
+    console.log("Update operations:", JSON.stringify(updateOps, null, 2));
 
-    if (!updatedShipment) {
-        throw new Error("Failed to update shipment");
-    }
-
-    //  Sync key fields to Tracking 
-    const trackingUpdate: any = {};
-
-    if (status !== undefined) trackingUpdate.status = status;
-
-    // Add more sync if you need (e.g. currentLocation later)
-    // if (data.currentLocation) trackingUpdate.currentLocation = data.currentLocation;
-
-    if (Object.keys(trackingUpdate).length > 0) {
-        await Tracking.findOneAndUpdate(
-        { trackingId },
-        { $set: trackingUpdate },
-        { new: true }
+    // ─── Apply update to Shipment ───
+    let updatedShipment;
+    
+    try {
+        updatedShipment = await Shipment.findOneAndUpdate(
+            { trackingId },
+            { $set: updateOps },
+            { 
+                new: true, 
+                runValidators: true,
+                // Don't validate fields that aren't being updated
+                context: 'query'
+            }
         );
+
+        if (!updatedShipment) {
+            throw new Error("Failed to update shipment");
+        }
+    } catch (error: any) {
+        console.error("Shipment update error:", error);
+        throw new Error(`Failed to update shipment: ${error.message}`);
     }
 
-    //  Return result 
+    // ─── Sync relevant fields to Tracking table ───
+    const trackingUpdateOps: Record<string, any> = {};
+
+    // Only sync fields that exist in Tracking schema
+    if (status !== undefined) trackingUpdateOps.status = status;
+    if (estimatedDelivery !== undefined) trackingUpdateOps.estimatedDelivery = estimatedDelivery;
+
+    // Sender (only name, city, country in Tracking)
+    if (senderName !== undefined) trackingUpdateOps["sender.name"] = senderName;
+    if (senderCity !== undefined) trackingUpdateOps["sender.city"] = senderCity;
+    if (senderCountry !== undefined) trackingUpdateOps["sender.country"] = senderCountry;
+
+    // Receiver (only name, phoneNumber, city, country in Tracking)
+    if (receiverName !== undefined) trackingUpdateOps["receiver.name"] = receiverName;
+    if (receiverPhone !== undefined) trackingUpdateOps["receiver.phoneNumber"] = receiverPhone;
+    if (receiverCity !== undefined) trackingUpdateOps["receiver.city"] = receiverCity;
+    if (receiverCountry !== undefined) trackingUpdateOps["receiver.country"] = receiverCountry;
+
+    // Destination
+    if (destinationAddress !== undefined) trackingUpdateOps["destination.address"] = destinationAddress;
+    if (destinationCity !== undefined) trackingUpdateOps["destination.city"] = destinationCity;
+    if (destinationCountry !== undefined) trackingUpdateOps["destination.country"] = destinationCountry;
+    if (destinationZipCode !== undefined) trackingUpdateOps["destination.zipCode"] = destinationZipCode;
+
+    // Update Tracking table if there are changes
+    if (Object.keys(trackingUpdateOps).length > 0) {
+        try {
+            const updatedTracking = await Tracking.findOneAndUpdate(
+                { trackingId },
+                { $set: trackingUpdateOps },
+                { new: true, runValidators: true }
+            );
+
+            if (!updatedTracking) {
+                console.warn(`⚠️ Tracking record not found for trackingId: ${trackingId}`);
+            } else {
+                console.log("✅ Tracking synced successfully");
+            }
+        } catch (error: any) {
+            console.error("❌ Tracking sync error:", error.message);
+            // Don't throw - shipment is already updated
+        }
+    }
+
+    // ✅ SEND UPDATE EMAIL (only if status or delivery date changed)
+    if (status !== undefined || estimatedDelivery !== undefined) {
+        try {
+            await sendUpdateEmail({
+                to: updatedShipment.receiver.email,
+                trackingCode: trackingId,
+                receiverName: updatedShipment.receiver.name,
+                receiverCity: updatedShipment.receiver.city,
+                receiverCountry: updatedShipment.receiver.country,
+                oldStatus: shipment.status, // Old status before update
+                newStatus: status || updatedShipment.status,
+                estimatedDelivery: estimatedDelivery 
+                    ? estimatedDelivery.toISOString().split('T')[0] 
+                    : updatedShipment.estimatedDelivery.toISOString().split('T')[0],
+                updateMessage: status 
+                    ? `Your package status has been updated to ${status}.`
+                    : 'Your package delivery information has been updated.',
+            });
+            console.log('✅ Update email sent successfully');
+        } catch (emailError: any) {
+            console.error('⚠️ Failed to send update email:', emailError.message);
+            // Don't throw - shipment is already updated
+        }
+    }
+
+    // ─── Return result ───
     return {
         success: true,
         message: "Shipment updated successfully",
         trackingId,
         updatedShipmentId: updatedShipment._id.toString(),
     };
+};
 
-    
+// ─── DELETE SHIPMENT (also deletes from Tracking) ───
+export const deleteShipmentByTrackingId = async (trackingId: string) => {
+    // Validation
+    if (!trackingId?.trim()) {
+        throw new Error("Tracking ID is required");
+    }
+
+    // Find shipment first to check if it exists
+    const shipment = await Shipment.findOne({ trackingId });
+
+    if (!shipment) {
+        throw new Error("Shipment not found");
+    }
+
+    // Delete from Shipment table
+    const deletedShipment = await Shipment.findOneAndDelete({ trackingId });
+
+    if (!deletedShipment) {
+        throw new Error("Failed to delete shipment");
+    }
+
+    // ─── Sync: Delete from Tracking table too ───
+    try {
+        const deletedTracking = await Tracking.findOneAndDelete({ trackingId });
+
+        if (!deletedTracking) {
+            console.warn(`⚠️ Tracking record not found for trackingId: ${trackingId}`);
+        } else {
+            console.log("✅ Tracking record deleted successfully");
+        }
+    } catch (error: any) {
+        console.error("❌ Error deleting tracking record:", error.message);
+        // Don't throw - shipment is already deleted
+    }
+
+    return {
+        success: true,
+        message: "Shipment and tracking record deleted successfully",
+        trackingId,
+    };
+};
+
+// ─── DELETE MULTIPLE SHIPMENTS (by IDs) ───
+export const deleteMultipleShipments = async (trackingId: string[]) => {
+    // Validation
+    if (!trackingId || trackingId.length === 0) {
+        throw new Error("At least one tracking ID is required");
+    }
+
+    // Delete from Shipment table
+    const deletedShipments = await Shipment.deleteMany({
+        trackingId: { $in: trackingId }
+    });
+
+    // ─── Sync: Delete from Tracking table too ───
+    try {
+        const deletedTrackings = await Tracking.deleteMany({
+            trackingId: { $in: trackingId }
+        });
+
+        console.log(`✅ Deleted ${deletedTrackings.deletedCount} tracking records`);
+    } catch (error: any) {
+        console.error("❌ Error deleting tracking records:", error.message);
+        // Don't throw - shipments are already deleted
+    }
+
+    return {
+        success: true,
+        message: `Deleted ${deletedShipments.deletedCount} shipment(s) and their tracking records`,
+        deletedCount: deletedShipments.deletedCount,
+    };
 };

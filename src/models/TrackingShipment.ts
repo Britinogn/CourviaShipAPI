@@ -85,7 +85,9 @@ const TrackingSchema = new Schema<ITrackingDocument>({
     collection: 'trackings',   // clearer name
 });
 
-TrackingSchema.index({ trackingId: 1 });
+
+
+// TrackingSchema.index({ trackingId: 1 });
 TrackingSchema.index({ status: 1 });
 
 export const Tracking: Model<ITrackingDocument> = mongoose.model<ITrackingDocument>(

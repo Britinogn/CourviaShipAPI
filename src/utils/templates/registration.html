@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Package Registered</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .email-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 30px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .email-header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .email-body {
+            padding: 40px 30px;
+            color: #333333;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333333;
+        }
+        .tracking-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 4px;
+        }
+        .tracking-code {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            letter-spacing: 2px;
+            margin: 10px 0;
+        }
+        .details-table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+        .details-table td {
+            padding: 12px 0;
+            border-bottom: 1px solid #eeeeee;
+        }
+        .details-table td:first-child {
+            font-weight: 600;
+            color: #666666;
+            width: 40%;
+        }
+        .details-table td:last-child {
+            color: #333333;
+        }
+        .cta-button {
+            display: inline-block;
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: transform 0.2s;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        .email-footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #999999;
+            font-size: 14px;
+        }
+        .email-footer p {
+            margin: 5px 0;
+        }
+        .divider {
+            height: 1px;
+            background-color: #eeeeee;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="email-header">
+            <h1>📦 Package Registered Successfully</h1>
+        </div>
+
+        <!-- Body -->
+        <div class="email-body">
+            <p class="greeting">Hello <strong>{{receiverName}}</strong>,</p>
+            
+            <p>Great news! A package has been registered and is on its way to you.</p>
+
+            <!-- Tracking Code Box -->
+            <div class="tracking-box">
+                <p style="margin: 0; font-size: 14px; color: #666;">Your Tracking Number:</p>
+                <div class="tracking-code">{{trackingCode}}</div>
+                <p style="margin: 10px 0 0 0; font-size: 13px; color: #999;">Keep this number safe to track your package</p>
+            </div>
+
+            <!-- Package Details -->
+            <h3 style="color: #333; margin-top: 30px;">Package Details</h3>
+            <table class="details-table">
+                <tr>
+                    <td>From</td>
+                    <td>{{senderName}}</td>
+                </tr>
+                <tr>
+                    <td>Delivery Address</td>
+                    <td>{{receiverAddress}}, {{receiverCity}}, {{receiverCountry}}</td>
+                </tr>
+                <tr>
+                    <td>Contact Phone</td>
+                    <td>{{receiverPhone}}</td>
+                </tr>
+                <tr>
+                    <td>Package Description</td>
+                    <td>{{packageDescription}}</td>
+                </tr>
+                <tr>
+                    <td>Weight</td>
+                    <td>{{packageWeight}} kg</td>
+                </tr>
+                <tr>
+                    <td>Quantity</td>
+                    <td>{{packageQuantity}}</td>
+                </tr>
+                <tr>
+                    <td>Estimated Delivery</td>
+                    <td><strong style="color: #667eea;">{{estimatedDelivery}}</strong></td>
+                </tr>
+            </table>
+
+            <div class="divider"></div>
+
+            <!-- CTA Button -->
+            <div style="text-align: center;">
+                <a href="#" class="cta-button">Track Your Package</a>
+            </div>
+
+            <p style="margin-top: 30px; color: #666; font-size: 14px;">
+                You will receive updates as your package moves through our delivery network.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="email-footer">
+            <p><strong>Courvia Shipping</strong></p>
+            <p>Reliable. Fast. Secure.</p>
+            <p style="margin-top: 15px;">© {{currentYear}} Courvia Shipping. All rights reserved.</p>
+            <p style="font-size: 12px; margin-top: 10px;">
+                This is an automated message, please do not reply to this email.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

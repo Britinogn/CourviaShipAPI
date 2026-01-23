@@ -116,7 +116,7 @@ const ShipmentSchema = new Schema<IShipmentDocument>({
 });
 
 // Indexes for better query performance
-ShipmentSchema.index({ trackingId: 1 });
+// ShipmentSchema.index({ trackingId: 1 });
 ShipmentSchema.index({ status: 1 });
 ShipmentSchema.index({ 'sender.email': 1 });
 ShipmentSchema.index({ 'receiver.email': 1 });
