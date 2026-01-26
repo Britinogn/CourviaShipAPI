@@ -17,7 +17,7 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
         }
 
         const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-        const user = await User.findById(decoded.id);
+        const user = await User.findById(decoded.userId);
 
         if (!user) {
             return res.status(401).json({ message: 'Unauthorized. User not found.' });

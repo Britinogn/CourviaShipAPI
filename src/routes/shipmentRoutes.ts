@@ -1,21 +1,28 @@
+// routes/shipmentRoutes.ts
 import express from "express";
-const router = express.Router()
-
-import shipmentController from  "../controller/shipmentController";
 import { authMiddleware } from "../middleware/authMiddleware";
+import shipmentController from "../controller/shipmentController";
+
+const router = express.Router();
+
+// ─── PUBLIC ROUTES (No authentication) ───
+// None for shipments - all operations require auth
+
+// ─── PROTECTED ROUTES (Admin only) ───
+router.use(authMiddleware);
 
 // Create
-router.post('/', shipmentController.createShipment)
+router.post("/", shipmentController.createShipment);
 
 // Read
-router.get('/:trackingId', authMiddleware, shipmentController.getShipment);
-router.get('/', authMiddleware, shipmentController.getAllShipmentsController);
+router.get("/", shipmentController.getAllShipmentsController);
+router.get("/:trackingId", shipmentController.getShipment);
 
 // Update
-router.patch('/:trackingId', shipmentController.updateShipment)
+router.patch("/:trackingId", shipmentController.updateShipment);
 
 // Delete
-//router.delete('/bulk', authMiddleware, shipmentController.deleteMultipleShipmentsController);
-router.delete('/:trackingId',  shipmentController.deleteShipment);
+router.delete("/bulk", shipmentController.deleteMultipleShipmentsController);
+router.delete("/:trackingId", shipmentController.deleteShipment);
 
 export default router;
