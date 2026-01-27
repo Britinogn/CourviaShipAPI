@@ -9,7 +9,7 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // ─── MAIN DASHBOARD OVERVIEW (Get everything in one call) ───
-router.get("/overview", dashboardController.getDashboardOverviewController);
+router.get("/", dashboardController.getDashboardOverviewController);
 
 // ─── INDIVIDUAL STATS ENDPOINTS ───
 router.get("/total", dashboardController.getTotalShipmentsController);
