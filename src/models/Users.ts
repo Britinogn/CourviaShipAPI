@@ -19,6 +19,7 @@ const userSchema: Schema<IUser> = new Schema<IUser>({
     password: {
         type: String,
         required: true,
+        // select: false,
         minlength: 6,
     }
 } , { timestamps: true });
