@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "start": "node dist/server.ts",
+    "start": "node dist/server.js",
     "dev": "nodemon --watch src --ext ts,js --delay 250ms --exec ts-node src/server.ts",
     "prestart": "npm run build"
   },
