@@ -86,7 +86,7 @@ export interface IShipment {
 // Tracking shipment interface
 export interface ITrackingShipment {
   trackingId: string;             
-  sender: Pick<IPerson, "name" | "city" | "country">; 
+  sender: Pick<IPerson, "name" | "city" | "address" | "country">; 
   receiver: Pick<IPerson, "name" | "city" | "phoneNumber" | "country">;
 
   status: ShipmentStatus;      
