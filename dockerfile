@@ -26,7 +26,7 @@ RUN npm run build
 EXPOSE $PORT
 
 # Run the application
-CMD ["node", "dist/server.ts"]
+CMD ["node", "dist/server.js"]
 
 
 # docker starter 
