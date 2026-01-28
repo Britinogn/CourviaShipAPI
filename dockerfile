@@ -52,3 +52,44 @@ CMD ["node", "dist/server.js"]
 
 # To build and start:
 # docker-compose up --build
+
+# # Stage 1: Build (compile TypeScript)
+# FROM node:20 AS builder
+
+# WORKDIR /app
+
+# # Copy package files first → better caching
+# COPY package*.json ./
+# RUN npm install
+
+# # Copy tsconfig + source
+# # ← adjust if your source is not in /src
+# COPY tsconfig.json ./
+# COPY src ./src  
+
+# # Build → creates dist/
+# RUN npm run build
+
+# # Stage 2: Runtime (slim production image)
+# #or node:20-alpine for even smaller
+# FROM node:20-slim   
+# WORKDIR /app
+
+# # Copy package files + install ONLY production deps
+# COPY --from=builder /app/package*.json ./
+# RUN npm ci --omit=dev && npm cache clean --force
+
+# # Copy the compiled output
+# COPY --from=builder /app/dist ./dist
+
+# # Optional: copy other needed files (e.g. views, public, .env.example if any)
+# # COPY --from=builder /app/public ./public
+# # COPY --from=builder /app/views ./views
+
+# # Production settings
+# ENV NODE_ENV=production
+# # Render injects PORT automatically, but explicit is fine
+# EXPOSE ${PORT:-10000}
+
+# # Start the app (use .js!)
+# CMD ["node", "dist/server.js"]
