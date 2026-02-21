@@ -10,7 +10,7 @@ import { Shipment } from "../models/Shipment";
  * @returns Promise<string> - Unique tracking code
  */
 export const generateTrackingCode = async (
-  prefix: string = "DEL-",
+  prefix: string = "CVR-",
   length: number = 6,
   maxRetries: number = 5
 ): Promise<string> => {

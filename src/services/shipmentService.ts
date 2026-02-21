@@ -246,11 +246,19 @@ export const registerShipmentServices = async (data: {
             phoneNumber: receiver.phoneNumber,
             city: receiver.city,
             country: receiver.country,
+            address: receiver.address,
         },
         status: shipment.status,
         destination,
         registeredAt: shipment.registeredAt,
         estimatedDelivery: shipment.estimatedDelivery,
+
+        currentLocation: {
+            city: receiverCity,
+            country: receiverCountry,
+            address: receiverAddress,
+            arrivedAt: new Date(),
+        },
     });
 
     const websiteUrl = process.env.WEBSITE_URL as string;
@@ -430,6 +438,7 @@ export const updateShipmentServices = async(
     // Other fields
     if (estimatedDelivery !== undefined) updateOps.estimatedDelivery = estimatedDelivery;
     if (status !== undefined) updateOps.status = status;
+    
 
     // Debug: Log what we're trying to update
     console.log("Update operations:", JSON.stringify(updateOps, null, 2));
@@ -480,6 +489,18 @@ export const updateShipmentServices = async(
     if (destinationCity !== undefined) trackingUpdateOps["destination.city"] = destinationCity;
     if (destinationCountry !== undefined) trackingUpdateOps["destination.country"] = destinationCountry;
     if (destinationZipCode !== undefined) trackingUpdateOps["destination.zipCode"] = destinationZipCode;
+
+    // Current Location - sync receiver details
+    if (receiverAddress !== undefined || receiverCity !== undefined || receiverCountry !== undefined || receiverZipCode !== undefined) {
+        if (receiverCity !== undefined) trackingUpdateOps["currentLocation.city"] = receiverCity;
+        if (receiverCountry !== undefined) trackingUpdateOps["currentLocation.country"] = receiverCountry;
+        if (receiverAddress !== undefined) trackingUpdateOps["currentLocation.address"] = receiverAddress;
+        if (receiverZipCode !== undefined) trackingUpdateOps["currentLocation.zipCode"] = receiverZipCode;
+    }
+
+    if (status !== undefined) {
+        trackingUpdateOps["currentLocation.arrivedAt"] = new Date();
+    }
 
     // Update Tracking table if there are changes
     if (Object.keys(trackingUpdateOps).length > 0) {

@@ -15,6 +15,7 @@ const ReceiverMinimalSchema = new Schema({
     phoneNumber:  { type: String, required: true, trim: true },
     city:   { type: String, required: true },
     country: { type: String, enum: countries, required: true },
+    address:     { type: String, required: true }, 
 }, { _id: false });
 
 const DestinationSchema = new Schema({
@@ -77,6 +78,7 @@ const TrackingSchema = new Schema<ITrackingDocument>({
             departedAt:   Date,
         },
         required: false,
+        default: undefined,
         _id: false,
     },
 
