@@ -3,67 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Package Update</title>
+    <title>Package Update - CourviaShip</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Arial', Helvetica, sans-serif;
             background-color: #f4f4f4;
+            line-height: 1.6;
         }
         .email-container {
             max-width: 600px;
             margin: 40px auto;
             background-color: #ffffff;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
         .email-header {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            padding: 40px 30px;
+            padding: 50px 30px;
             text-align: center;
             color: #ffffff;
         }
         .email-header h1 {
             margin: 0;
-            font-size: 28px;
-            font-weight: 600;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
         .email-body {
             padding: 40px 30px;
             color: #333333;
         }
         .greeting {
-            font-size: 18px;
+            font-size: 20px;
             margin-bottom: 20px;
+            font-weight: 600;
             color: #333333;
         }
         .update-box {
             background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 20px;
+            border-left: 5px solid #ffc107;
+            padding: 25px;
             margin: 30px 0;
-            border-radius: 4px;
-        }
-        .update-box h3 {
-            margin: 0 0 15px 0;
-            color: #856404;
-            font-size: 18px;
+            border-radius: 8px;
         }
         .status-change {
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 20px 0;
+            margin: 25px 0;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 18px;
         }
         .status-badge {
-            padding: 10px 20px;
-            border-radius: 20px;
+            padding: 12px 28px;
+            border-radius: 30px;
             font-weight: 600;
             font-size: 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
         .status-old {
             background-color: #e0e0e0;
@@ -74,73 +73,74 @@
             color: #ffffff;
         }
         .arrow {
-            font-size: 24px;
+            font-size: 28px;
             color: #999;
+            font-weight: bold;
         }
         .tracking-code {
-            font-size: 20px;
+            font-size: 28px;
             font-weight: bold;
             color: #f5576c;
-            letter-spacing: 2px;
-            margin: 10px 0;
+            letter-spacing: 3px;
+            margin: 12px 0;
             text-align: center;
         }
         .details-table {
             width: 100%;
-            margin: 20px 0;
+            margin: 25px 0;
             border-collapse: collapse;
         }
         .details-table td {
-            padding: 12px 0;
+            padding: 14px 0;
             border-bottom: 1px solid #eeeeee;
         }
         .details-table td:first-child {
             font-weight: 600;
-            color: #666666;
-            width: 45%;
+            color: #555555;
+            width: 40%;
         }
         .details-table td:last-child {
             color: #333333;
         }
         .cta-button {
             display: inline-block;
-            padding: 14px 30px;
+            padding: 16px 36px;
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: #ffffff;
+            color: #ffffff !important;
             text-decoration: none;
-            border-radius: 6px;
+            border-radius: 50px;
             font-weight: 600;
-            margin: 20px 0;
-            transition: transform 0.2s;
+            font-size: 16px;
+            margin: 30px auto;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(240, 147, 251, 0.3);
+            text-align: center;
         }
         .cta-button:hover {
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(240, 147, 251, 0.4);
         }
         .email-footer {
             background-color: #f8f9fa;
-            padding: 30px;
+            padding: 35px 30px;
             text-align: center;
-            color: #999999;
+            color: #777777;
             font-size: 14px;
         }
         .email-footer p {
-            margin: 5px 0;
+            margin: 6px 0;
         }
         .divider {
             height: 1px;
             background-color: #eeeeee;
-            margin: 30px 0;
+            margin: 35px 0;
         }
-        .info-icon {
-            display: inline-block;
-            width: 50px;
-            height: 50px;
-            background-color: #ffc107;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 50px;
-            font-size: 24px;
-            margin-bottom: 15px;
+        @media only screen and (max-width: 600px) {
+            .email-container { margin: 20px; }
+            .email-body { padding: 30px 20px; }
+            .cta-button { width: 100%; box-sizing: border-box; }
+            .status-change { flex-direction: column; gap: 12px; }
+            .arrow { transform: rotate(90deg); }
         }
     </style>
 </head>
@@ -148,7 +148,7 @@
     <div class="email-container">
         <!-- Header -->
         <div class="email-header">
-            <h1>📬 Package Update</h1>
+            <h1>📬 Package Status Updated</h1>
         </div>
 
         <!-- Body -->
@@ -159,26 +159,25 @@
 
             <!-- Tracking Code -->
             <div style="text-align: center; margin: 30px 0;">
-                <p style="margin: 0; font-size: 14px; color: #666;">Tracking Number:</p>
+                <p style="margin: 0; font-size: 15px; color: #555;">Tracking Number:</p>
                 <div class="tracking-code">{{trackingCode}}</div>
             </div>
 
             <!-- Status Change Box -->
             <div class="update-box">
                 <div style="text-align: center;">
-                    <div class="info-icon">ℹ️</div>
-                    <h3>Status Updated</h3>
+                    <h3>Status Changed</h3>
                 </div>
                 
                 <div class="status-change">
-                    <span class="status-badge status-old">{{oldStatus}}</span>
+                    <span class="status-badge status-old">{{oldStatus || 'N/A'}}</span>
                     <span class="arrow">→</span>
                     <span class="status-badge status-new">{{newStatus}}</span>
                 </div>
             </div>
 
             <!-- Update Details -->
-            <h3 style="color: #333; margin-top: 30px;">Update Information</h3>
+            <h3 style="color: #333; margin-top: 35px; font-size: 20px;">Update Details</h3>
             <table class="details-table">
                 <tr>
                     <td>Delivery Location</td>
@@ -186,7 +185,7 @@
                 </tr>
                 <tr>
                     <td>Previous Status</td>
-                    <td>{{oldStatus}}</td>
+                    <td>{{oldStatus || 'N/A'}}</td>
                 </tr>
                 <tr>
                     <td>Current Status</td>
@@ -194,7 +193,7 @@
                 </tr>
                 <tr>
                     <td>Estimated Delivery</td>
-                    <td><strong style="color: #f5576c;">{{estimatedDelivery}}</strong></td>
+                    <td><strong style="color: #f5576c;">{{estimatedDelivery || 'Not updated'}}</strong></td>
                 </tr>
             </table>
 
@@ -202,31 +201,30 @@
 
             <!-- CTA Button -->
             <div style="text-align: center;">
-                <!-- <a href="#" class="cta-button">Track Your Package</a> -->
                 <a href="{{trackingUrl}}" class="cta-button" target="_blank">
-                    Track Your Package
+                    Track Your Package Now
                 </a>
             </div>
 
-            <p style="margin-top: 30px; color: #666; font-size: 14px;">
-                We'll continue to keep you updated as your package progresses through our delivery network.
+            <p style="margin-top: 30px; color: #555; font-size: 15px; text-align: center;">
+                We'll keep you posted on every step of the journey.
             </p>
         </div>
 
         <!-- Footer -->
         <div class="email-footer">
             <p><strong>Courvia Shipping</strong></p>
-            <p>Reliable. Fast. Secure.</p>
-            <p style="margin-top: 15px;">© {{currentYear}} Courvia Shipping. All rights reserved.</p>
-            <p style="font-size: 12px; margin-top: 10px;">
-                This is an automated message, please do not reply to this email.
+            <p>Reliable • Fast • Secure</p>
+            <p style="margin-top: 20px;">© {{currentYear}} Courvia Shipping. All rights reserved.</p>
+            <p style="font-size: 13px; margin-top: 12px;">
+                This is an automated message — please do not reply.
+            </p>
+            <p style="margin-top: 12px;">
+                <a href="{{websiteUrl}}" style="color: #f5576c; text-decoration: underline; font-weight: 500;">
+                    Visit CourviaShip Website
+                </a>
             </p>
         </div>
     </div>
 </body>
 </html>
-
-<!-- <script>
-    const websiteUrl = process.env.WEBSITE_URL
-    const trackingUrl = `${websiteUrl}/track?code=${trackingCode}`
-</script> -->

@@ -78,6 +78,8 @@ export const sendRegistrationEmail = async (data: RegistrationEmailData): Promis
             packageQuantity: data.packageQuantity.toString(),
             estimatedDelivery: data.estimatedDelivery,
             currentYear: new Date().getFullYear().toString(),
+            trackingUrl: `${process.env.WEBSITE_URL}/tracking`,
+            websiteUrl: process.env.WEBSITE_URL || 'https://courvia-ship.vercel.app', 
         };
 
         // Replace placeholders
@@ -118,6 +120,8 @@ export const sendUpdateEmail = async (data: UpdateEmailData): Promise<boolean> =
             estimatedDelivery: data.estimatedDelivery || 'Not updated',
             updateMessage: data.updateMessage || 'Your package status has been updated.',
             currentYear: new Date().getFullYear().toString(),
+            trackingUrl: `${process.env.WEBSITE_URL}/tracking/`,
+            websiteUrl: process.env.WEBSITE_URL || 'https://courvia-ship.vercel.app',
         };
 
         // Replace placeholders
