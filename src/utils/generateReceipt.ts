@@ -120,17 +120,11 @@ export const generateReceiptPDF = async (
         // ─── Package Table (like Panex) ───────────────────────────────
         const tY = tableY + 10;
         const tableHeaders = ['Package Type', 'Delivery Status', 'Description', 'Delivery Cost'];
-        // const tableColW = [100, 110, contentWidth - 310, 100];
         const tableColW: number[] = [100, 110, contentWidth - 310, 100];
         let tx = margin;
 
         // Table header row
         doc.rect(margin, tY, contentWidth, 24).fill(black);
-        // tableHeaders.forEach((h, i) => {
-        //     doc.fontSize(8).fillColor(white).font('Helvetica-Bold')
-        //         .text(h, tx + 6, tY + 8, { width: tableColW[i] - 6 });
-        //     tx += tableColW[i];
-        // });
         tableHeaders.forEach((h, i) => {
             doc.fontSize(8).fillColor(white).font('Helvetica-Bold')
                 .text(h, tx + 6, tY + 8, { width: (tableColW[i] ?? 100) - 6 });
@@ -148,19 +142,6 @@ export const generateReceiptPDF = async (
             shipment.package.description,
             shipment.package.declaredValue ? `USD ${shipment.package.declaredValue}` : 'N/A'
         ];
-
-        // rowData.forEach((val, i) => {
-        //     if (i === 1) {
-        //         // Status badge
-        //         doc.rect(tx + 4, rowY + 6, tableColW[i] - 14, 16).fill('#dcfce7').stroke('#16a34a');
-        //         doc.fontSize(8).fillColor(green).font('Helvetica-Bold')
-        //             .text(val, tx + 6, rowY + 10, { width: tableColW[i] - 16 });
-        //     } else {
-        //         doc.fontSize(8).fillColor(black).font('Helvetica')
-        //             .text(val || 'N/A', tx + 6, rowY + 10, { width: tableColW[i] - 10, lineBreak: false });
-        //     }
-        //     tx += tableColW[i];
-        // });
 
         rowData.forEach((val, i) => {
             const colWidth = tableColW[i] ?? 100;
