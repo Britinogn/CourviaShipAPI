@@ -39,7 +39,7 @@ export interface UpdateEmailData {
 // Helper: Load HTML template
 const loadTemplate = async (templateName: string): Promise<string> => {
     try {
-        const templatePath = path.join(__dirname, '..', 'emailTemplates', `${templateName}.html`);
+        const templatePath = path.join(__dirname,  'emailTemplates', `${templateName}.html`);
         console.log("Looking for template:", templatePath);
         const template = await fs.readFile(templatePath, 'utf-8');
         return template;
