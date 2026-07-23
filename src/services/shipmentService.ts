@@ -285,7 +285,7 @@ export const registerShipmentServices = async (data: {
             packageQuantity: packageInfo.quantity || 1,
             trackingUrl:trackingUrl
         });
-        console.log('✅ Registration email sent successfully');
+        // console.log('✅ Registration email sent successfully');
     } catch (emailError: any) {
         console.error('⚠️ Failed to send registration email:', emailError.message);
         // Don't throw - shipment is already created
