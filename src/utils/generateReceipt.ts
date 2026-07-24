@@ -1,204 +1,314 @@
 import PDFDocument from 'pdfkit';
 import { HydratedDocument } from 'mongoose';
-import { IShipment } from '../types'; 
-import { IShipmentDocument } from '../models/Shipment'
+import { IShipment } from '../types';
+import { IShipmentDocument } from '../models/Shipment';
 
 export const generateReceiptPDF = async (
-    shipment: IShipment | HydratedDocument<IShipmentDocument>
+  shipment: IShipment | HydratedDocument<IShipmentDocument>
 ): Promise<Buffer> => {
-    return new Promise((resolve, reject) => {
-        const doc = new PDFDocument({ margin: 0, size: 'A4' });
-        const buffers: Buffer[] = [];
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ margin: 0, size: 'A4' });
+    const buffers: Buffer[] = [];
 
-        doc.on('data', buffers.push.bind(buffers));
-        doc.on('end', () => resolve(Buffer.concat(buffers)));
-        doc.on('error', reject);
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', () => resolve(Buffer.concat(buffers)));
+    doc.on('error', reject);
 
-        const green = '#16a34a';
-        const black = '#0f172a';
-        const gray = '#64748b';
-        const lightGray = '#e2e8f0';
-        const white = '#ffffff';
-        const pageWidth = 595.28;
-        const pageHeight = 841.89;
-        const margin = 40;
-        const contentWidth = pageWidth - margin * 2;
+    // ─── Colors ─────────────────────────────────────────────────
+    const brand = '#16a34a';       // header/logo accent
+    const green = '#16a34a';       // "paid" / positive status
+    const greenBg = '#dcfce7';
+    const amber = '#ea580c';       // "pending" pill
+    const amberBg = '#ffedd5';
+    const stampRed = '#16a34a';
+    const black = '#111827';
+    const gray = '#6b7280';
+    const lightGray = '#e5e7eb';
+    const veryLightGray = '#f9fafb';
+    const white = '#ffffff';
 
-        // ─── White background ─────────────────────────────────────────
-        doc.rect(0, 0, pageWidth, pageHeight).fill(white);
+    const pageWidth = 595.28;
+    const pageHeight = 841.89;
+    const margin = 40;
+    const contentWidth = pageWidth - margin * 2;
 
-        // ─── Top green accent bar ─────────────────────────────────────
-        doc.rect(0, 0, pageWidth, 6).fill(green);
+    // Fields not yet on IShipment (locker number, payment method/status).
+    // Cast defensively so this compiles even before you add them to the
+    // schema/type; they simply won't render until the data is present.
+    const senderAny = shipment.sender as any;
+    const packageAny = shipment.package as any;
 
-        // ─── Logo / Company Name ──────────────────────────────────────
-        doc.fontSize(22).fillColor(green).font('Helvetica-Bold')
-            .text('COURVIA', margin, 24, { continued: true })
-            .fillColor(black)
-            .text('SHIP');
+    // ─── Background ─────────────────────────────────────────────
+    doc.rect(0, 0, pageWidth, pageHeight).fill(white);
 
-        doc.fontSize(8).fillColor(gray).font('Helvetica')
-            .text('GLOBAL LOGISTICS & SHIPPING', margin, 50);
+    // ─── Header ─────────────────────────────────────────────────
+    doc.fontSize(22).fillColor(green).font('Helvetica-Bold')
+    .text('COURVIA', margin, 22, { continued: true })
+    .fillColor(black)
+    .text('SHIP')
 
-        // ─── "APPROVED FOR DELIVERY" top right ───────────────────────
-        doc.fontSize(9).fillColor(gray).font('Helvetica-Bold')
-            .text('APPROVED FOR DELIVERY', pageWidth - margin - 160, 24, { width: 160, align: 'right' });
+    doc.fontSize(9).fillColor(gray).font('Helvetica-Bold')
+      .text('GLOBAL LOGISTICS & SHIPPING', margin, 50, { characterSpacing: 0.6 });
 
-        // ─── Divider ──────────────────────────────────────────────────
-        doc.rect(margin, 68, contentWidth, 1).fill(lightGray);
+    doc.fontSize(9).fillColor(gray).font('Helvetica-Bold')
+      .text('APPROVED FOR DELIVERY', pageWidth - margin - 180, 30, {
+        width: 180,
+        align: 'right',
+      });
 
-        // ─── Three column header: SENDER | RECIPIENT | PACKAGE ────────
-        const colW = contentWidth / 3;
-        const col1x = margin;
-        const col2x = margin + colW;
-        const col3x = margin + colW * 2;
-        let headerY = 82;
+    doc.moveTo(margin, 72).lineTo(pageWidth - margin, 72)
+      .strokeColor(lightGray).lineWidth(1).stroke();
 
-        const boldLabel = (label: string, value: string, x: number, y: number, width: number = colW - 10) => {
-            doc.fontSize(9).fillColor(black).font('Helvetica-Bold')
-                .text(`${label}: `, x, y, { continued: true, width })
-                .font('Helvetica').fillColor(black)
-                .text(value || 'N/A');
-        };
+    // ─── Three columns: Sender / Recipient / Tracking-Package ───
+    const col1 = margin;
+    const col2 = margin + 175;
+    const col3 = margin + 350;
+    const colWidth = 155;
 
-        const sectionTitle = (title: string, x: number, y: number) => {
-            doc.fontSize(8).fillColor(gray).font('Helvetica-Bold')
-                .text(title, x, y);
-        };
+    const y = 92;
 
-        // SENDER column
-        sectionTitle('SENDER', col1x, headerY);
-        doc.fontSize(13).fillColor(black).font('Helvetica-Bold')
-            .text(shipment.sender.name, col1x, headerY + 14, { width: colW - 10 });
+    const labelValue = (label: string, value: string | null | undefined, x: number, currentY: number, maxWidth = colWidth) => {
+      doc.fontSize(9).font('Helvetica-Bold').fillColor(black)
+        .text(`${label}: `, x, currentY, { continued: true, width: maxWidth });
+      doc.font('Helvetica').fillColor(black)
+        .text(value || 'N/A', { width: maxWidth });
+      return doc.y + 6;
+    };
 
-        let senderY = headerY + 36;
-        boldLabel('Phone', shipment.sender.phoneNumber, col1x, senderY, colW - 10); senderY += 18;
-        boldLabel('Address', shipment.sender.address, col1x, senderY, colW - 10); senderY += 18;
-        boldLabel('City', shipment.sender.city, col1x, senderY, colW - 10); senderY += 18;
-        boldLabel('Country', shipment.sender.country, col1x, senderY, colW - 10); senderY += 18;
-        if (shipment.sender.companyName) {
-            boldLabel('Company', shipment.sender.companyName, col1x, senderY, colW - 10); senderY += 18;
-        }
-        boldLabel('Email', shipment.sender.email, col1x, senderY, colW - 10);
+    // ── SENDER ──
+    doc.fontSize(8).fillColor(gray).font('Helvetica-Bold').text('SENDER', col1, y);
+    doc.fontSize(13).fillColor(black).font('Helvetica-Bold')
+      .text(shipment.sender.name || 'N/A', col1, y + 14, { width: colWidth });
 
-        // RECIPIENT column
-        sectionTitle('RECIPIENT', col2x, headerY);
-        doc.fontSize(13).fillColor(black).font('Helvetica-Bold')
-            .text(shipment.receiver.name, col2x, headerY + 14, { width: colW - 10 });
+    let y1 = y + 34;
+    y1 = labelValue('Phone', shipment.sender.phoneNumber, col1, y1);
+    if (shipment.sender.phoneNumber) {
+      doc.fontSize(8).fillColor(gray).font('Helvetica')
+        .text(`(tel:${shipment.sender.phoneNumber})`, col1, y1, { width: colWidth });
+      y1 = doc.y + 6;
+    }
+    y1 = labelValue('Address', shipment.sender.address, col1, y1);
+    y1 = labelValue('Country Origin', shipment.origin?.country, col1, y1);
+    y1 = labelValue('City Origin', shipment.origin?.city, col1, y1);
+    if (senderAny.lockerNumber) {
+      y1 = labelValue('Locker', senderAny.lockerNumber, col1, y1);
+    }
 
-        let receiverY = headerY + 36;
-        boldLabel('Phone', shipment.receiver.phoneNumber, col2x, receiverY, colW - 10); receiverY += 18;
-        boldLabel('Address', shipment.receiver.address, col2x, receiverY, colW - 10); receiverY += 18;
-        boldLabel('City', shipment.receiver.city, col2x, receiverY, colW - 10); receiverY += 18;
-        boldLabel('Country', shipment.receiver.country, col2x, receiverY, colW - 10); receiverY += 18;
-        boldLabel('Email', shipment.receiver.email, col2x, receiverY, colW - 10); receiverY += 18;
-        boldLabel('Est. Delivery', shipment.estimatedDelivery.toLocaleDateString('en-US'), col2x, receiverY, colW - 10);
+    // ── RECIPIENT ──
+    doc.fontSize(8).fillColor(gray).font('Helvetica-Bold').text('RECIPIENT', col2, y);
+    doc.fontSize(13).fillColor(black).font('Helvetica-Bold')
+      .text(shipment.receiver.name || 'N/A', col2, y + 14, { width: colWidth });
 
-        // PACKAGE / TRACKING column
-        sectionTitle('TRACKING', col3x, headerY);
+    let y2 = y + 34;
+    y2 = labelValue('Telephone', shipment.receiver.phoneNumber, col2, y2);
+    if (shipment.receiver.phoneNumber) {
+      doc.fontSize(8).fillColor(gray).font('Helvetica')
+        .text(`(tel:${shipment.receiver.phoneNumber})`, col2, y2, { width: colWidth });
+      y2 = doc.y + 6;
+    }
+    y2 = labelValue('Address', shipment.receiver.address, col2, y2);
+    y2 = labelValue('Email', shipment.receiver.email, col2, y2);
+    y2 = labelValue('Destination Country', shipment.destination?.country, col2, y2);
+    y2 = labelValue('Destination City', shipment.destination?.city, col2, y2);
+    y2 = labelValue(
+      'Arrival Date',
+      shipment.estimatedDelivery
+        ? new Date(shipment.estimatedDelivery).toLocaleDateString('en-US')
+        : null,
+      col2,
+      y2
+    );
 
-        // Barcode-style tracking ID box
-        doc.rect(col3x, headerY + 14, colW - 10, 36).stroke(lightGray);
-        doc.fontSize(7).fillColor(gray).font('Helvetica')
-            .text('* ' + shipment.trackingId + ' *', col3x, headerY + 20, { width: colW - 10, align: 'center' });
-        doc.fontSize(11).fillColor(black).font('Helvetica-Bold')
-            .text(shipment.trackingId, col3x, headerY + 30, { width: colW - 10, align: 'center' });
+    // ── TRACKING / PACKAGE ──
+    const barcodeX = col3;
+    const barcodeY = y;
+    const barcodeW = 145;
+    const barcodeH = 34;
+    doc.rect(barcodeX, barcodeY, barcodeW, barcodeH).strokeColor(lightGray).lineWidth(1).stroke();
 
-        let packageY = headerY + 60;
-        boldLabel('Weight', `${shipment.package.weightKg} Kg`, col3x, packageY, colW - 10); packageY += 18;
-        boldLabel('Quantity', `${shipment.package.quantity || 1}`, col3x, packageY, colW - 10); packageY += 18;
-        boldLabel('Dimensions', shipment.package.dimensions, col3x, packageY, colW - 10); packageY += 18;
-        if (shipment.package.declaredValue) {
-            boldLabel('Est. Value', `USD ${shipment.package.declaredValue}`, col3x, packageY, colW - 10); packageY += 18;
-        }
-        boldLabel('Fragile', shipment.package.isFragile ? 'Yes' : 'No', col3x, packageY, colW - 10); packageY += 18;
-        boldLabel('Signature', shipment.package.requiresSignature ? 'Required' : 'Not Required', col3x, packageY, colW - 10);
+    const code = String(shipment.trackingId || 'AWB-000000');
+    let bx = barcodeX + 8;
+    const barTop = barcodeY + 5;
+    const barBottom = barcodeY + 24;
+    for (let i = 0; i < code.length; i++) {
+      const c = code.charCodeAt(i);
+      const w = 1 + (c % 3);
+      if (c % 2 === 0) {
+        doc.rect(bx, barTop, w, barBottom - barTop).fill(black);
+      }
+      bx += w + 1.4;
+      if (bx > barcodeX + barcodeW - 8) break;
+    }
+    doc.fontSize(7).fillColor(black).font('Helvetica-Bold')
+      .text(`* ${code} *`, barcodeX, barcodeY + 24, { width: barcodeW, align: 'center' });
 
-        // ─── Divider ──────────────────────────────────────────────────
-        const tableY = Math.max(senderY, receiverY, packageY) + 30;
-        doc.rect(margin, tableY, contentWidth, 1).fill(lightGray);
+    let y3 = barcodeY + barcodeH + 12;
+    y3 = labelValue('Package Weight', `${shipment.package.weightKg} Kg`, col3, y3);
 
-        // ─── Package Table (like Panex) ───────────────────────────────
-        const tY = tableY + 10;
-        const tableHeaders = ['Package Type', 'Delivery Status', 'Description', 'Delivery Cost'];
-        const tableColW: number[] = [100, 110, contentWidth - 310, 100];
-        let tx = margin;
+    if (packageAny.paymentMethod || packageAny.paymentStatus) {
+      doc.fontSize(9).fillColor(black).font('Helvetica-Bold').text('Payment Method:', col3, y3);
+      y3 += 14;
+      let px = col3;
+      if (packageAny.paymentMethod) {
+        const label = packageAny.paymentMethod as string;
+        const w = doc.fontSize(8).font('Helvetica-Bold').widthOfString(label) + 24;
+        doc.roundedRect(px, y3, w, 18, 9).fill(amberBg);
+        doc.fontSize(8).fillColor(amber).font('Helvetica-Bold')
+          .text(label, px, y3 + 5, { width: w, align: 'center' });
+        px += w + 6;
+      }
+      if (packageAny.paymentStatus) {
+        const label = packageAny.paymentStatus as string;
+        const w = doc.fontSize(8).font('Helvetica-Bold').widthOfString(label) + 24;
+        doc.roundedRect(px, y3, w, 18, 9).fill(greenBg);
+        doc.fontSize(8).fillColor(green).font('Helvetica-Bold')
+          .text(label, px, y3 + 5, { width: w, align: 'center' });
+      }
+      y3 += 28;
+    }
 
-        // Table header row
-        doc.rect(margin, tY, contentWidth, 24).fill(black);
-        tableHeaders.forEach((h, i) => {
-            doc.fontSize(8).fillColor(white).font('Helvetica-Bold')
-                .text(h, tx + 6, tY + 8, { width: (tableColW[i] ?? 100) - 6 });
-            tx += tableColW[i] ?? 100;
-        });
+    if (shipment.package.declaredValue) {
+      doc.fontSize(9).fillColor(black).font('Helvetica-Bold').text('Estimated Insurance', col3, y3);
+      y3 += 13;
+      y3 = labelValue('Value', `USD ${shipment.package.declaredValue}`, col3, y3);
+    }
 
-        // Table data row
-        const rowY = tY + 24;
-        doc.rect(margin, rowY, contentWidth, 28).fill(white).stroke(lightGray);
-        tx = margin;
+    // ─── Table ──────────────────────────────────────────────────
+    const tableTop = Math.max(y1, y2, y3) + 26;
+    const headers = ['Package Type', 'Delivery Status', 'Description', 'Delivery Cost'];
+    const colWidths: number[] = [110, 120, contentWidth - 340, 110];
 
-        const rowData = [
-            shipment.package.dimensions || 'Custom',
-            shipment.status,
-            shipment.package.description,
-            shipment.package.declaredValue ? `USD ${shipment.package.declaredValue}` : 'N/A'
-        ];
+    doc.rect(margin, tableTop, contentWidth, 26).fillAndStroke(veryLightGray, lightGray);
 
-        rowData.forEach((val, i) => {
-            const colWidth = tableColW[i] ?? 100;
-            if (i === 1) {
-                doc.rect(tx + 4, rowY + 6, colWidth - 14, 16).fill('#dcfce7').stroke('#16a34a');
-                doc.fontSize(8).fillColor(green).font('Helvetica-Bold')
-                    .text(val, tx + 6, rowY + 10, { width: colWidth - 16 });
-            } else {
-                doc.fontSize(8).fillColor(black).font('Helvetica')
-                    .text(val || 'N/A', tx + 6, rowY + 10, { width: colWidth - 10, lineBreak: false });
-            }
-            tx += colWidth;
-        });
-
-        // ─── Route section ────────────────────────────────────────────
-        const routeY = rowY + 44;
-        doc.rect(margin, routeY, contentWidth, 1).fill(lightGray);
-
-        doc.fontSize(8).fillColor(gray).font('Helvetica-Bold')
-            .text('ORIGIN', margin, routeY + 10);
-        doc.fontSize(9).fillColor(black).font('Helvetica')
-            .text(`${shipment.origin.address}, ${shipment.origin.city}, ${shipment.origin.country}`, margin, routeY + 22, { width: contentWidth / 2 - 20 });
-
-        doc.fontSize(14).fillColor(green).font('Helvetica-Bold')
-            .text('-->', pageWidth / 2 - 15, routeY + 18);
-
-        doc.fontSize(8).fillColor(gray).font('Helvetica-Bold')
-            .text('DESTINATION', pageWidth / 2 + 20, routeY + 10);
-        doc.fontSize(9).fillColor(black).font('Helvetica')
-            .text(`${shipment.destination.address}, ${shipment.destination.city}, ${shipment.destination.country}`, pageWidth / 2 + 20, routeY + 22, { width: contentWidth / 2 - 20 });
-
-        // ─── Signature / stamp area ───────────────────────────────────
-        const signY = routeY + 70;
-        doc.rect(margin, signY, contentWidth, 1).fill(lightGray);
-
-        doc.fontSize(8).fillColor(gray).font('Helvetica')
-            .text('Issued: ' + shipment.registeredAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), margin, signY + 12);
-
-        // Signature box
-        doc.rect(pageWidth - margin - 160, signY + 8, 160, 55).stroke(lightGray);
-        doc.fontSize(8).fillColor(gray).font('Helvetica-Bold')
-            .text('COURVIASHIP', pageWidth - margin - 155, signY + 14, { width: 150, align: 'center' });
-        doc.fontSize(7).fillColor(gray).font('Helvetica')
-            .text('SIGN: ................................', pageWidth - margin - 155, signY + 30)
-            .text('DATE: ................................', pageWidth - margin - 155, signY + 44);
-
-        // ─── Customs notice ───────────────────────────────────────────
-        const customsY = signY + 80;
-        doc.fontSize(9).fillColor(black).font('Helvetica-Bold')
-            .text('Customs Duty/Tax Payable By Recipient.', margin, customsY, { align: 'center', width: contentWidth });
-
-        // ─── Footer ───────────────────────────────────────────────────
-        doc.rect(0, pageHeight - 40, pageWidth, 40).fill(black);
-        doc.rect(0, pageHeight - 40, pageWidth, 3).fill(green);
-        doc.fontSize(8).fillColor(gray).font('Helvetica')
-            .text('support@courviaship.com  |  www.courviaship.com  |  Thank you for choosing CourviaShip!', margin, pageHeight - 24, { align: 'center', width: contentWidth });
-
-        doc.end();
+    let x = margin;
+    headers.forEach((h, i) => {
+      const width = colWidths[i] ?? 100;
+      doc.fontSize(8).fillColor(black).font('Helvetica-Bold')
+        .text(h, x + 10, tableTop + 9, { width: width - 14 });
+      x += width;
+      if (i < headers.length - 1) {
+        doc.moveTo(x, tableTop).lineTo(x, tableTop + 56)
+          .strokeColor(lightGray).lineWidth(1).stroke();
+      }
     });
+
+    const rowY = tableTop + 26;
+    const rowH = 30;
+    doc.rect(margin, rowY, contentWidth, rowH).strokeColor(lightGray).lineWidth(1).stroke();
+
+    const rowValues = [
+      shipment.package.dimensions || 'Custom',
+      shipment.status,
+      shipment.package.description || 'N/A',
+      shipment.package.declaredValue ? `USD ${shipment.package.declaredValue}` : 'N/A',
+    ];
+
+    x = margin;
+    rowValues.forEach((val, i) => {
+      const width = colWidths[i] ?? 100;
+      if (i === 1) {
+        doc.fontSize(8).font('Helvetica-Bold');
+        const pillWidth = doc.widthOfString(val) + 20;
+        doc.roundedRect(x + 10, rowY + 7, pillWidth, 16, 8).fill(greenBg);
+        doc.fillColor(green).text(val, x + 10, rowY + 11, { width: pillWidth, align: 'center' });
+      } else {
+        doc.fontSize(8).fillColor(black).font('Helvetica')
+          .text(val, x + 10, rowY + 11, { width: width - 16 });
+      }
+      x += width;
+    });
+
+    // ─── Methods of Payment ─────────────────────────────────────
+    const paymentY = rowY + rowH + 40;
+
+    doc.fontSize(10).fillColor(black).font('Helvetica-Bold')
+      .text('Methods of Payment:', margin, paymentY);
+
+    const boxW = 260;
+    const boxH = 78;
+    doc.roundedRect(margin, paymentY + 16, boxW, boxH, 6)
+      .strokeColor(lightGray).lineWidth(1).stroke();
+
+    const badgeRow1 = ['GeoTrust', 'Visa', 'Mastercard'];
+    let badgeX = margin + 10;
+    const badgeY1 = paymentY + 26;
+    badgeRow1.forEach((label) => {
+      doc.fontSize(7.5).font('Helvetica-Bold');
+      const w = doc.widthOfString(label) + 16;
+      doc.roundedRect(badgeX, badgeY1, w, 16, 4).fill(veryLightGray);
+      doc.fillColor(black).text(label, badgeX, badgeY1 + 4, { width: w, align: 'center' });
+      badgeX += w + 6;
+    });
+
+    doc.fontSize(7.5).font('Helvetica-Bold');
+    const paypalW = doc.widthOfString('PayPal') + 16;
+    doc.roundedRect(margin + 10, badgeY1 + 22, paypalW, 16, 4).fill(veryLightGray);
+    doc.fillColor(black).text('PayPal', margin + 10, badgeY1 + 26, { width: paypalW, align: 'center' });
+
+    const safeLabel = 'SAFE SHOPPING';
+    doc.fontSize(7.5).font('Helvetica-Bold');
+    const safeW = doc.widthOfString(safeLabel) + 20;
+    doc.roundedRect(margin + 10, badgeY1 + 44, safeW, 16, 8).fill(greenBg);
+    doc.fillColor(green).text(safeLabel, margin + 10, badgeY1 + 48, { width: safeW, align: 'center' });
+
+    doc.fontSize(8).fillColor(gray).font('Helvetica')
+      .text(
+        'For your convenience we have several reliable, fast and secure payments.',
+        margin,
+        paymentY + 16 + boxH + 10,
+        { width: boxW }
+      );
+
+    // ─── Stamp ──────────────────────────────────────────────────
+    const stampW = 180;
+    const stampH = 100;
+    const stampX = pageWidth - margin - stampW;
+    const stampCenterY = paymentY + 10 + stampH / 2;
+
+    doc.save();
+    doc.translate(stampX + stampW / 2, stampCenterY);
+    doc.rotate(-6);
+
+    doc.roundedRect(-stampW / 2, -stampH / 2, stampW, stampH, 4)
+      .strokeColor(stampRed).lineWidth(2).stroke();
+
+    doc.fontSize(9).fillColor(stampRed).font('Helvetica-Bold')
+      .text('COURVIASHIP INC.', -stampW / 2, -stampH / 2 + 12, {
+        width: stampW,
+        align: 'center',
+        characterSpacing: 0.3,
+      });
+
+    doc.fontSize(13).fillColor(stampRed).font('Helvetica-Bold')
+      .text('STAMP DUTY', -stampW / 2, -stampH / 2 + 38, { width: stampW, align: 'center' });
+
+    doc.fontSize(9).fillColor(stampRed).font('Helvetica-Bold')
+      .text('1 STAMP DUTY', -stampW / 2, -stampH / 2 + 60, { width: stampW, align: 'center' });
+
+    doc.fontSize(15).fillColor(stampRed).font('Helvetica-Oblique')
+      .text('Courviaship', -stampW / 2, -stampH / 2 + 78, { width: stampW, align: 'right' });
+
+    doc.restore();
+
+    // ─── Customs notice ─────────────────────────────────────────
+    const customsY = paymentY + 16 + boxH + 50;
+    doc.fontSize(9).fillColor(black).font('Helvetica-Bold')
+      .text('Customs Duty/Tax Payable By Recipient.', margin, customsY, {
+        width: contentWidth,
+        align: 'center',
+      });
+
+    doc.fontSize(8).fillColor(gray).font('Helvetica')
+      .text(
+        `Issued: ${new Date(shipment.registeredAt).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })}`,
+        margin,
+        customsY + 26
+      );
+
+    doc.end();
+  });
 };
