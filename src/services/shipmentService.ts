@@ -61,26 +61,20 @@ export const getAllShipments = async (filters?: {
 
 // ─── GET SHIPMENT BY TRACKING ID ───
 export const getShipmentByTrackingId = async (trackingId: string) => {
-    // Validation
     if (!trackingId?.trim()) {
-        throw new Error("Tracking ID is required");
+      throw new Error("Tracking ID is required");
     }
-
-    // Find shipment
+  
     const shipment = await Shipment.findOne({ trackingId })
-        .select("-__v") // Remove version key
-        .lean(); // Return plain JS object (faster)
-
+      .select("-__v")
+      .lean();
+  
     if (!shipment) {
-        throw new Error("Shipment not found");
+      throw new Error("Shipment not found");
     }
-
-    // Format response
-    return {
-        success: true,
-        message: "Shipment ID fetched successfully",
-        trackingId,
-    };
+  
+    // MUST return the full document
+    return shipment;
 };
 
 

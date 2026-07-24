@@ -73,7 +73,7 @@ export const getShipment = async (
       status: true,
       message:  "Shipment retrieved successfully",
       data: {
-        shipment: result
+        shipment: result as any
       },
     });
 
