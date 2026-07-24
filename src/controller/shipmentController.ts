@@ -21,6 +21,9 @@ export interface IShipmentRes{
         skip: number;
         hasMore: boolean;
       };
+      deletedCount?: number;
+      requestedCount?: number;
+      notFound?: string[];
     }
 }
 
@@ -215,13 +218,13 @@ const deleteShipment = async (
 // ─── DELETE MULTIPLE SHIPMENTS ───
 
 export const deleteMultipleShipmentsController  = async (
-    req: Request<{}, IShipmentRes | IErrorRes, { trackingId: string[] }>,
+    req: Request<{}, IShipmentRes | IErrorRes, { trackingId?: string[]; trackingIds?: string[] }>,
     res: Response<IShipmentRes | IErrorRes>
 ): Promise<void> => {
     try {
-        const { trackingId } = req.body;
+        const trackingIds = req.body.trackingIds ?? req.body.trackingId;
 
-        if (!trackingId || !Array.isArray(trackingId) || trackingId.length === 0) {
+        if (!trackingIds || !Array.isArray(trackingIds) || trackingIds.length === 0) {
             res.status(400).json({
                 status: false,
                 message: "Array of tracking IDs is required",
@@ -235,11 +238,16 @@ export const deleteMultipleShipmentsController  = async (
         //   return;
         // }
 
-        const result = await deleteMultipleShipments(trackingId);
+        const result = await deleteMultipleShipments(trackingIds);
 
         res.status(200).json({
             status: true,
             message: result.message || "Shipments deleted successfully",
+            data: {
+                deletedCount: result.deletedCount,
+                requestedCount: result.requestedCount,
+                notFound: result.notFound,
+            },
         });
     } catch (err: any) {
         res.status(400).json({

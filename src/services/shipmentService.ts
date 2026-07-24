@@ -606,32 +606,83 @@ export const deleteShipmentByTrackingId = async (trackingId: string) => {
 };
 
 // ─── DELETE MULTIPLE SHIPMENTS (by IDs) ───
-export const deleteMultipleShipments = async (trackingId: string[]) => {
-    // Validation
-    if (!trackingId || trackingId.length === 0) {
+const BULK_DELETE_MAX_BATCH = 100;
+
+export interface BulkDeleteResult {
+    success: boolean;
+    message: string;
+    deletedCount: number;
+    requestedCount: number;
+    notFound?: string[];
+}
+
+export const deleteMultipleShipments = async (trackingIds: string[]): Promise<BulkDeleteResult> => {
+    if (!trackingIds || trackingIds.length === 0) {
         throw new Error("At least one tracking ID is required");
     }
 
-    // Delete from Shipment table
+    const normalizedIds: string[] = [];
+    const seen = new Set<string>();
+
+    for (const id of trackingIds) {
+        if (typeof id !== "string") continue;
+        const trimmed = id.trim();
+        if (!trimmed || seen.has(trimmed)) continue;
+        seen.add(trimmed);
+        normalizedIds.push(trimmed);
+    }
+
+    if (normalizedIds.length === 0) {
+        throw new Error("No valid tracking IDs provided");
+    }
+
+    if (normalizedIds.length > BULK_DELETE_MAX_BATCH) {
+        throw new Error(`Batch size exceeds maximum of ${BULK_DELETE_MAX_BATCH} tracking IDs`);
+    }
+
+    const requestedCount = normalizedIds.length;
+
+    const existing = await Shipment.find({ trackingId: { $in: normalizedIds } })
+        .select("trackingId")
+        .lean();
+    const existingIds = new Set(existing.map((s) => s.trackingId));
+    const notFound = normalizedIds.filter((id) => !existingIds.has(id));
+
     const deletedShipments = await Shipment.deleteMany({
-        trackingId: { $in: trackingId }
+        trackingId: { $in: normalizedIds },
     });
 
-    // ─── Sync: Delete from Tracking table too ───
     try {
         const deletedTrackings = await Tracking.deleteMany({
-            trackingId: { $in: trackingId }
+            trackingId: { $in: normalizedIds },
         });
 
         console.log(`✅ Deleted ${deletedTrackings.deletedCount} tracking records`);
     } catch (error: any) {
         console.error("❌ Error deleting tracking records:", error.message);
-        // Don't throw - shipments are already deleted
     }
 
-    return {
+    const deletedCount = deletedShipments.deletedCount;
+
+    let message: string;
+    if (deletedCount === 0) {
+        message = "No shipments were deleted";
+    } else if (notFound.length > 0) {
+        message = `Deleted ${deletedCount} of ${requestedCount} shipment(s); ${notFound.length} not found`;
+    } else {
+        message = `Deleted ${deletedCount} shipment(s) and their tracking records`;
+    }
+
+    const result: BulkDeleteResult = {
         success: true,
-        message: `Deleted ${deletedShipments.deletedCount} shipment(s) and their tracking records`,
-        deletedCount: deletedShipments.deletedCount,
+        message,
+        deletedCount,
+        requestedCount,
     };
+
+    if (notFound.length > 0) {
+        result.notFound = notFound;
+    }
+
+    return result;
 };
