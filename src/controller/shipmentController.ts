@@ -1,7 +1,10 @@
 import { Request, Response } from "express";
 import { IShipment } from "../types";
 import { getAllShipments, getShipmentByTrackingId, deleteShipmentByTrackingId, 
-  registerShipmentServices, updateShipmentServices, deleteMultipleShipments  } from "../services/shipmentService";
+  registerShipmentServices, updateShipmentServices, deleteMultipleShipments  
+} from "../services/shipmentService";
+
+import {generateReceiptPDF} from '../utils/generateReceipt'
 
 // response interfaces 
 
@@ -247,11 +250,58 @@ export const deleteMultipleShipmentsController  = async (
 };
 
 
+export const getShipmentReceipt = async (
+  req: Request<{ trackingId: string }>,
+  res: Response
+): Promise<void> => {
+  try {
+    const { trackingId } = req.params;
+
+    if (!trackingId?.trim()) {
+      res.status(400).json({
+        status: false,
+        message: 'Tracking ID is required',
+      });
+      return;
+    }
+
+    const shipment = await getShipmentByTrackingId(trackingId);
+
+    if (!shipment) {
+      res.status(404).json({
+        status: false,
+        message: 'Shipment not found',
+      });
+      return;
+    }
+
+    // Generate the PDF
+    const pdfBuffer = await generateReceiptPDF(shipment as any);
+
+    // Send as downloadable PDF
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="receipt-${trackingId}.pdf"`,
+      'Content-Length': pdfBuffer.length,
+    });
+
+    res.send(pdfBuffer);
+  } catch (err: any) {
+    const statusCode = err.message?.includes('not found') ? 404 : 400;
+    res.status(statusCode).json({
+      status: false,
+      message: err.message || 'Failed to generate receipt',
+    });
+  }
+};
+
+
 export default {
-    getShipment,
-    getAllShipmentsController,
-    createShipment,
-    updateShipment,
-    deleteShipment,
-    deleteMultipleShipmentsController
+  getShipment,
+  getAllShipmentsController,
+  createShipment,
+  updateShipment,
+  deleteShipment,
+  deleteMultipleShipmentsController,
+  getShipmentReceipt
 }

@@ -25,4 +25,8 @@ router.patch("/:trackingId", shipmentController.updateShipment);
 router.delete("/bulk", shipmentController.deleteMultipleShipmentsController);
 router.delete("/:trackingId", shipmentController.deleteShipment);
 
+
+//
+router.get('/shipments/:trackingId/receipt', shipmentController.getShipmentReceipt);
+
 export default router;

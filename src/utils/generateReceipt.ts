@@ -174,9 +174,28 @@ export const generateReceiptPDF = async (
     }
 
     // ─── Table ──────────────────────────────────────────────────
+    // ─── Table ──────────────────────────────────────────────────
     const tableTop = Math.max(y1, y2, y3) + 26;
     const headers = ['Package Type', 'Delivery Status', 'Description', 'Delivery Cost'];
     const colWidths: number[] = [110, 120, contentWidth - 340, 110];
+
+    const rowValues = [
+      shipment.package.dimensions || 'Custom',
+      shipment.status,
+      shipment.package.description || 'N/A',
+      shipment.package.declaredValue ? `USD ${shipment.package.declaredValue}` : 'N/A',
+    ];
+
+    doc.fontSize(8).font('Helvetica');
+    const cellPadding = 22;
+    const rowH = Math.max(
+      30,
+      ...rowValues.map((val, i) => {
+        if (i === 1) return 30;
+        const width = colWidths[i] ?? 100;
+        return doc.heightOfString(val, { width: width - 16 }) + cellPadding;
+      })
+    );
 
     doc.rect(margin, tableTop, contentWidth, 26).fillAndStroke(veryLightGray, lightGray);
 
@@ -187,21 +206,13 @@ export const generateReceiptPDF = async (
         .text(h, x + 10, tableTop + 9, { width: width - 14 });
       x += width;
       if (i < headers.length - 1) {
-        doc.moveTo(x, tableTop).lineTo(x, tableTop + 56)
+        doc.moveTo(x, tableTop).lineTo(x, tableTop + 26 + rowH)
           .strokeColor(lightGray).lineWidth(1).stroke();
       }
     });
 
     const rowY = tableTop + 26;
-    const rowH = 30;
     doc.rect(margin, rowY, contentWidth, rowH).strokeColor(lightGray).lineWidth(1).stroke();
-
-    const rowValues = [
-      shipment.package.dimensions || 'Custom',
-      shipment.status,
-      shipment.package.description || 'N/A',
-      shipment.package.declaredValue ? `USD ${shipment.package.declaredValue}` : 'N/A',
-    ];
 
     x = margin;
     rowValues.forEach((val, i) => {

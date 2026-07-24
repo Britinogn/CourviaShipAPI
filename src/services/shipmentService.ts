@@ -123,6 +123,7 @@ export const registerShipmentServices = async (data: {
 
     // Optional
     estimatedDelivery: Date;
+    registeredAt?: Date;
 }) => {
     const {
         senderName, senderEmail, senderPhone, senderAddress, senderCity, senderCountry,
@@ -137,6 +138,7 @@ export const registerShipmentServices = async (data: {
         destinationAddress, destinationCity, destinationCountry, destinationZipCode,
 
         estimatedDelivery,
+        registeredAt,
     } = data;
 
     // ─── Validation ────
@@ -220,7 +222,8 @@ export const registerShipmentServices = async (data: {
         origin,
         destination,
         status: ShipmentStatus.InTransit,
-        registeredAt: new Date(),
+        // registeredAt: new Date(),
+        registeredAt: registeredAt ? new Date(registeredAt) : new Date(),
         estimatedDelivery,
         // currentLocation: undefined, // starts empty
     });
@@ -343,6 +346,7 @@ export const updateShipmentServices = async(
 
         // Optional
         estimatedDelivery?: Date;
+        registeredAt?: Date;
         status?: ShipmentStatus;
     }
 ) => {
@@ -360,6 +364,7 @@ export const updateShipmentServices = async(
         destinationAddress, destinationCity, destinationCountry, destinationZipCode,
 
         estimatedDelivery,
+        registeredAt,
         status,
     } = data;
 
@@ -431,6 +436,7 @@ export const updateShipmentServices = async(
 
     // Other fields
     if (estimatedDelivery !== undefined) updateOps.estimatedDelivery = estimatedDelivery;
+    if (registeredAt !== undefined) updateOps.registeredAt = registeredAt;
     if (status !== undefined) updateOps.status = status;
     
 
