@@ -17,12 +17,16 @@ import authRoutes from './routes/authRoutes';
 import shipmentRoutes from './routes/shipmentRoutes'
 import trackRoutes from './routes/trackRoutes'
 import dashboardRoutes from './routes/dashboardRoutes'
+import settingsRoutes from './routes/settingsRoutes'
+import path from 'path';
 
 //use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/shipments', shipmentRoutes)
 app.use('/api/tracking', trackRoutes)
 app.use('/api/dashboard', dashboardRoutes)
+app.use('/api/settings', settingsRoutes)
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.get('/health', (req: Request, res: Response) => {
     res.json({ 

@@ -21,6 +21,10 @@ const userSchema: Schema<IUser> = new Schema<IUser>({
         required: true,
         // select: false,
         minlength: 6,
+    },
+    avatarUrl: {
+        type: String,
+        trim: true,
     }
 } , { timestamps: true });
 
