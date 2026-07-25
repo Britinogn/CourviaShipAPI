@@ -29,5 +29,6 @@ router.patch(
     handleUploadError,
     settingsController.uploadCompanyLogo
 );
+router.get("/company/public", settingsController.getPublicCompany);
 
 export default router;

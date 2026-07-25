@@ -154,6 +154,24 @@ export const uploadCompanyLogo = async (req: AuthRequest, res: Response): Promis
     }
 };
 
+export const getPublicCompany = async (_req: Request, res: Response): Promise<void> => {
+    try {
+        const company = await getCompanySettings();
+
+        res.status(200).json({
+            status: true,
+            message: "Company info retrieved successfully",
+            data: {
+                companyName: company.companyName,
+                websiteUrl: company.websiteUrl,
+                logoUrl: company.logoUrl,
+            },
+        });
+    } catch (error: any) {
+        sendError(res, error, "Failed to retrieve company info");
+    }
+};
+
 export default {
     getProfile,
     updateProfile,
@@ -162,4 +180,5 @@ export default {
     getCompany,
     updateCompany,
     uploadCompanyLogo,
+    getPublicCompany
 };
