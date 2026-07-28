@@ -165,6 +165,7 @@ export const getPublicCompany = async (_req: Request, res: Response): Promise<vo
                 companyName: company.companyName,
                 websiteUrl: company.websiteUrl,
                 logoUrl: company.logoUrl,
+                supportEmail: company.supportEmail,
             },
         });
     } catch (error: any) {
